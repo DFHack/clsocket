@@ -58,12 +58,12 @@ bool CActiveSocket::ConnectTCP(const uint8 *pAddr, int16 nPort)
     struct in_addr stIpAddress;
 
     //------------------------------------------------------------------
-    // Preconnection setup that must be preformed					 
+    // Preconnection setup that must be preformed
     //------------------------------------------------------------------
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
     m_stServerSockaddr.sin_family = AF_INET;
 
-    if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL) 
+    if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL)
     {
 #ifdef WIN32
         TranslateSocketError();
@@ -88,30 +88,30 @@ bool CActiveSocket::ConnectTCP(const uint8 *pAddr, int16 nPort)
     m_stServerSockaddr.sin_port = htons(nPort);
 
     //------------------------------------------------------------------
-    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.  
-    // 
+    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.
+    //
     //------------------------------------------------------------------
     m_timer.Initialize();
     m_timer.SetStartTime();
 
-    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) == 
-	CSimpleSocket::SocketError)
+    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) ==
+            CSimpleSocket::SocketError)
     {
         //--------------------------------------------------------------
-        // Get error value this might be a non-blocking socket so we 
+        // Get error value this might be a non-blocking socket so we
         // must first check.
         //--------------------------------------------------------------
         TranslateSocketError();
 
         //--------------------------------------------------------------
         // If the socket is non-blocking and the current socket error
-        // is SocketEinprogress or SocketEwouldblock then poll connection 
+        // is SocketEinprogress or SocketEwouldblock then poll connection
         // with select for designated timeout period.
         // Linux returns EINPROGRESS and Windows returns WSAEWOULDBLOCK.
         //--------------------------------------------------------------
-        if ((IsNonblocking()) && 
-            ((GetSocketError() == CSimpleSocket::SocketEwouldblock) || 
-	     (GetSocketError() == CSimpleSocket::SocketEinprogress)))
+        if ((IsNonblocking()) &&
+                ((GetSocketError() == CSimpleSocket::SocketEwouldblock) ||
+                 (GetSocketError() == CSimpleSocket::SocketEinprogress)))
         {
             bRetVal = Select(GetConnectTimeoutSec(), GetConnectTimeoutUSec());
         }
@@ -139,12 +139,12 @@ bool CActiveSocket::ConnectUDP(const uint8 *pAddr, int16 nPort)
     struct in_addr stIpAddress;
 
     //------------------------------------------------------------------
-    // Pre-connection setup that must be preformed					 
+    // Pre-connection setup that must be preformed
     //------------------------------------------------------------------
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
     m_stServerSockaddr.sin_family = AF_INET;
 
-    if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL) 
+    if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL)
     {
 #ifdef WIN32
         TranslateSocketError();
@@ -169,8 +169,8 @@ bool CActiveSocket::ConnectUDP(const uint8 *pAddr, int16 nPort)
     m_stServerSockaddr.sin_port = htons(nPort);
 
     //------------------------------------------------------------------
-    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.  
-    // 
+    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.
+    //
     //------------------------------------------------------------------
     m_timer.Initialize();
     m_timer.SetStartTime();
@@ -198,12 +198,12 @@ bool CActiveSocket::ConnectRAW(const uint8 *pAddr, int16 nPort)
     bool           bRetVal = false;
     struct in_addr stIpAddress;
     //------------------------------------------------------------------
-    // Pre-connection setup that must be preformed					 
+    // Pre-connection setup that must be preformed
     //------------------------------------------------------------------
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
     m_stServerSockaddr.sin_family = AF_INET;
 
-    if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL) 
+    if ((m_pHE = GETHOSTBYNAME(pAddr)) == NULL)
     {
 #ifdef WIN32
         TranslateSocketError();
@@ -228,8 +228,8 @@ bool CActiveSocket::ConnectRAW(const uint8 *pAddr, int16 nPort)
     m_stServerSockaddr.sin_port = htons(nPort);
 
     //------------------------------------------------------------------
-    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.  
-    // 
+    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.
+    //
     //------------------------------------------------------------------
     m_timer.Initialize();
     m_timer.SetStartTime();
@@ -277,24 +277,24 @@ bool CActiveSocket::Open(const uint8 *pAddr, int16 nPort)
 
     switch (m_nSocketType)
     {
-        case CSimpleSocket::SocketTypeTcp :
-        {
-            bRetVal = ConnectTCP(pAddr, nPort);
-            break;
-        }
-        case CSimpleSocket::SocketTypeUdp :
-        {
-            bRetVal = ConnectUDP(pAddr, nPort);
-            break;
-        }
-        case CSimpleSocket::SocketTypeRaw :
-            break;
-        default:
-            break;
+    case CSimpleSocket::SocketTypeTcp :
+    {
+        bRetVal = ConnectTCP(pAddr, nPort);
+        break;
+    }
+    case CSimpleSocket::SocketTypeUdp :
+    {
+        bRetVal = ConnectUDP(pAddr, nPort);
+        break;
+    }
+    case CSimpleSocket::SocketTypeRaw :
+        break;
+    default:
+        break;
     }
 
     //--------------------------------------------------------------------------
-    // If successful then create a local copy of the address and port							
+    // If successful then create a local copy of the address and port
     //--------------------------------------------------------------------------
     if (bRetVal)
     {
