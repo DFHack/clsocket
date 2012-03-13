@@ -50,19 +50,31 @@ elseif(WIN32)
 endif()
 
 OPTION(CLSOCKET_SHARED "Build clsocket lib as shared." ON)
+OPTION(CLSOCKET_DEP_ONLY "Build for use inside other CMake projects as dependency." OFF)
 
 # make the lib
 if(CLSOCKET_SHARED)
-    ADD_LIBRARY(clsocket SHARED ${CLSOCKET_SOURCES})
+    if(CLSOCKET_DEP_ONLY)
+        ADD_LIBRARY(clsocket SHARED EXCLUDE_FROM_ALL ${CLSOCKET_SOURCES})
+    else()
+        ADD_LIBRARY(clsocket SHARED ${CLSOCKET_SOURCES})
+    endif()
 else()
-    ADD_LIBRARY(clsocket STATIC ${CLSOCKET_SOURCES})
+    if(CLSOCKET_DEP_ONLY)
+        ADD_LIBRARY(clsocket STATIC EXCLUDE_FROM_ALL ${CLSOCKET_SOURCES})
+    else()
+        ADD_LIBRARY(clsocket STATIC ${CLSOCKET_SOURCES})
+    endif()
 endif()
-
 TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
 
 # install into configured prefix
-install(TARGETS clsocket ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
-install(FILES ${CLSOCKET_HEADERS} DESTINATION include)
+if(NOT CLSOCKET_DEP_ONLY)
+    install(TARGETS clsocket ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
+    install(FILES ${CLSOCKET_HEADERS} DESTINATION include)
+else()
+
+endif()
 
 if(UNIX)
     OPTION(CLSOCKET_EXAMPLES "Build the examples" OFF)
@@ -70,7 +82,9 @@ if(UNIX)
     if(CLSOCKET_EXAMPLES)
         ADD_EXECUTABLE(clsocket-example examples/RecvAsync.cpp)
         TARGET_LINK_LIBRARIES(clsocket-example clsocket pthread)
-        install(TARGETS clsocket-example DESTINATION bin)
+        if(NOT CLSOCKET_DEP_ONLY)
+            install(TARGETS clsocket-example DESTINATION bin)
+        endif()
     endif()
 endif()
 
