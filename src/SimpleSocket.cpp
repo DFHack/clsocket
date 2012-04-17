@@ -92,11 +92,11 @@ CSimpleSocket::CSimpleSocket(CSocketType nType) :
     //----------------------------------------------------------------------
     case CSimpleSocket::SocketTypeRaw:
     {
-#ifdef _LINUX
+#ifdef __LINUX__
         m_nSocketDomain = AF_PACKET;
         m_nSocketType = CSimpleSocket::SocketTypeRaw;
 #endif
-#ifdef WIN32
+#ifdef _WIN32
         m_nSocketType = CSimpleSocket::SocketTypeInvalid;
 #endif
         break;
