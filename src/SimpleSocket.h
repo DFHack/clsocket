@@ -49,7 +49,7 @@
 #include <stdarg.h>
 #include <errno.h>
 
-#if defined(__LINUX__) || defined (__APPLE__)
+#if defined(_LINUX) || defined (__APPLE__)
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -57,7 +57,7 @@
 #include <netinet/ip.h>
 #include <netdb.h>
 #endif
-#ifdef __LINUX__
+#ifdef _LINUX
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #include <linux/if.h>
