@@ -57,7 +57,7 @@
 #include <netinet/ip.h>
 #include <netdb.h>
 #endif
-#ifdef _LINUX
+#if defined(_LINUX) && !defined(__APPLE__)
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
 #include <linux/if.h>
