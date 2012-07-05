@@ -92,7 +92,7 @@ CSimpleSocket::CSimpleSocket(CSocketType nType) :
     //----------------------------------------------------------------------
     case CSimpleSocket::SocketTypeRaw:
     {
-#if defined(_LINUX) && !defined(__APPLE__)
+#if defined(_LINUX) && !defined(_DARWIN)
         m_nSocketDomain = AF_PACKET;
         m_nSocketType = CSimpleSocket::SocketTypeRaw;
 #endif
