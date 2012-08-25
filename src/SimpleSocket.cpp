@@ -947,7 +947,7 @@ int32 CSimpleSocket::SendFile(int32 nOutFd, int32 nInFd, off_t *pOffset, int32 n
 //------------------------------------------------------------------------------
 void CSimpleSocket::TranslateSocketError(void)
 {
-#ifdef _LINUX
+#if defined(_LINUX) || defined(_DARWIN)
     switch (errno)
     {
     case EXIT_SUCCESS:
