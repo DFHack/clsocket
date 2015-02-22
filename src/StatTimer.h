@@ -48,7 +48,7 @@
 #if WIN32
   #include <Winsock2.h>
   #include <time.h>
-#endif 
+#endif
 
 #ifdef _LINUX
   #include <stdio.h>
@@ -67,10 +67,10 @@
 #define MICROSECONDS_CONVERSION 1000000
 
 /// Class to abstract socket communications in a cross platform manner.
-/// This class is designed 
+/// This class is designed
 class CStatTimer {
 public:
-    CStatTimer() 
+    CStatTimer()
     {
     };
 
@@ -78,8 +78,8 @@ public:
     {
     };
 
-    void Initialize() 
-    { 
+    void Initialize()
+    {
         memset(&m_startTime, 0, sizeof(struct timeval));
         memset(&m_endTime, 0, sizeof(struct timeval));
     };
@@ -94,16 +94,16 @@ public:
     uint32 GetMicroSeconds() { return (CalcTotalUSec()); };
     uint32 GetSeconds() { return (CalcTotalUSec() / MICROSECONDS_CONVERSION); };
 
-    uint32 GetCurrentTime() 
-    { 
+    uint32 GetCurrentTime()
+    {
         struct timeval tmpTime;
-        GET_CLOCK_COUNT(&tmpTime); 
+        GET_CLOCK_COUNT(&tmpTime);
         return ((tmpTime.tv_sec * MICROSECONDS_CONVERSION) + tmpTime.tv_usec);
     };
 
 private:
-    uint32 CalcTotalUSec() { return (((m_endTime.tv_sec - m_startTime.tv_sec) * MICROSECONDS_CONVERSION) + 
-                                   (m_endTime.tv_usec - m_startTime.tv_usec)); };
+    uint32 CalcTotalUSec() { return (((m_endTime.tv_sec - m_startTime.tv_sec) * MICROSECONDS_CONVERSION) +
+                                    (m_endTime.tv_usec - m_startTime.tv_usec)); };
 
 
 private:

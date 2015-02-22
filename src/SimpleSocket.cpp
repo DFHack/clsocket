@@ -128,7 +128,6 @@ CSimpleSocket *CSimpleSocket::operator=(CSimpleSocket &socket)
 }
 
 
-
 //------------------------------------------------------------------------------
 //
 // Initialize() - Initialize socket class
@@ -160,7 +159,6 @@ bool CSimpleSocket::Initialize()
 }
 
 
-
 //------------------------------------------------------------------------------
 //
 // BindInterface()
@@ -191,7 +189,6 @@ bool CSimpleSocket::BindInterface(uint8 *pInterface)
 }
 
 
-
 //------------------------------------------------------------------------------
 //
 // SetMulticast()
@@ -222,7 +219,7 @@ bool CSimpleSocket::SetMulticast(bool bEnable, uint8 multicastTTL)
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SetSocketDscp()
@@ -248,7 +245,7 @@ bool CSimpleSocket::SetSocketDscp(int32 nDscp)
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // GetSocketDscp()
@@ -273,7 +270,7 @@ int32 CSimpleSocket::GetSocketDscp(void)
     return nTempVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // GetWindowSize()
@@ -304,7 +301,7 @@ uint16 CSimpleSocket::GetWindowSize(uint32 nOptionName)
     return nTcpWinSize;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SetWindowSize()
@@ -331,7 +328,6 @@ uint16 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
 }
 
 
-
 //------------------------------------------------------------------------------
 //
 // DisableNagleAlgorithm()
@@ -355,7 +351,7 @@ bool CSimpleSocket::DisableNagleAlgoritm()
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // EnableNagleAlgorithm()
@@ -379,7 +375,7 @@ bool CSimpleSocket::EnableNagleAlgoritm()
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Send() - Send data on a valid socket
@@ -459,7 +455,7 @@ int32 CSimpleSocket::Send(const uint8 *pBuf, size_t bytesToSend)
     return m_nBytesSent;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Close() - Close socket and free up any memory allocated for the socket
@@ -495,7 +491,7 @@ bool CSimpleSocket::Close(void)
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Shtudown()
@@ -511,7 +507,7 @@ bool CSimpleSocket::Shutdown(CShutdownMode nShutdown)
     return (nRetVal == CSimpleSocket::SocketSuccess) ? true: false;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Flush()
@@ -554,7 +550,7 @@ bool CSimpleSocket::Flush()
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Writev -
@@ -588,7 +584,7 @@ int32 CSimpleSocket::Writev(const struct iovec *pVector, size_t nCount)
     return nBytesSent;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Send() - Send data on a valid socket via a vector of buffers.
@@ -607,7 +603,7 @@ int32 CSimpleSocket::Send(const struct iovec *sendVector, int32 nNumItems)
     return m_nBytesSent;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SetReceiveTimeout()
@@ -635,7 +631,7 @@ bool CSimpleSocket::SetReceiveTimeout(int32 nRecvTimeoutSec, int32 nRecvTimeoutU
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SetSendTimeout()
@@ -662,7 +658,7 @@ bool CSimpleSocket::SetSendTimeout(int32 nSendTimeoutSec, int32 nSendTimeoutUsec
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SetOptionReuseAddr()
@@ -683,7 +679,7 @@ bool CSimpleSocket::SetOptionReuseAddr()
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SetOptionLinger()
@@ -706,14 +702,14 @@ bool CSimpleSocket::SetOptionLinger(bool bEnable, uint16 nTime)
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Receive() - Attempts to receive a block of data on an established
-//			   connection.	Data is received in an internal buffer managed
-//			   by the class.  This buffer is only valid until the next call
-//			   to Receive(), a call to Close(), or until the object goes out
-//			   of scope.
+//             connection.    Data is received in an internal buffer managed
+//             by the class.  This buffer is only valid until the next call
+//             to Receive(), a call to Close(), or until the object goes out
+//             of scope.
 //
 //------------------------------------------------------------------------------
 int32 CSimpleSocket::Receive(int32 nMaxBytes)
@@ -821,7 +817,7 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes)
     return m_nBytesReceived;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SetNonblocking()
@@ -860,7 +856,7 @@ bool CSimpleSocket::SetNonblocking(void)
     return true;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SetBlocking()
@@ -897,7 +893,7 @@ bool CSimpleSocket::SetBlocking(void)
     return true;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // SendFile() - stands-in for system provided sendfile
@@ -939,7 +935,7 @@ int32 CSimpleSocket::SendFile(int32 nOutFd, int32 nInFd, off_t *pOffset, int32 n
     return nOutCount;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // TranslateSocketError() -
@@ -977,7 +973,7 @@ void CSimpleSocket::TranslateSocketError(void)
         SetSocketError(CSimpleSocket::SocketEinprogress);
         break;
     case EWOULDBLOCK:
-        //		case EAGAIN:
+        //        case EAGAIN:
         SetSocketError(CSimpleSocket::SocketEwouldblock);
         break;
     case EINTR:
@@ -1066,7 +1062,7 @@ void CSimpleSocket::TranslateSocketError(void)
 #endif
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Select()

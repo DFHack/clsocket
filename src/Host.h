@@ -236,7 +236,7 @@ extern "C"
   #define PRINTF   printf
   #define VPRINTF  vprintf
   #define FPRINTF  fprintf
-#else 
+#else
   #define SNPRINTF snprintf
   #define PRINTF   printf
   #define VPRINTF  vprintf
@@ -248,6 +248,3 @@ extern "C"
 #endif
 
 #endif /* __HOST_H__ */
-
-
-

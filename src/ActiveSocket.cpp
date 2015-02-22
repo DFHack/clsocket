@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
-/* CActiveSocket.cpp - Active Socket Implementation							 */
+/* CActiveSocket.cpp - Active Socket Implementation                          */
 /*                                                                           */
 /* Author : Mark Carrier (mark@carrierlabs.com)                              */
 /*                                                                           */
@@ -46,7 +46,6 @@ CActiveSocket::CActiveSocket(CSocketType nType) : CSimpleSocket(nType)
 {
 }
 
-
 //------------------------------------------------------------------------------
 //
 // ConnectTCP() -
@@ -88,7 +87,7 @@ bool CActiveSocket::ConnectTCP(const uint8 *pAddr, int16 nPort)
     m_stServerSockaddr.sin_port = htons(nPort);
 
     //------------------------------------------------------------------
-    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.
+    // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
     //
     //------------------------------------------------------------------
     m_timer.Initialize();
@@ -127,7 +126,6 @@ bool CActiveSocket::ConnectTCP(const uint8 *pAddr, int16 nPort)
     return bRetVal;
 }
 
-
 //------------------------------------------------------------------------------
 //
 // ConnectUDP() -
@@ -169,7 +167,7 @@ bool CActiveSocket::ConnectUDP(const uint8 *pAddr, int16 nPort)
     m_stServerSockaddr.sin_port = htons(nPort);
 
     //------------------------------------------------------------------
-    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.
+    // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
     //
     //------------------------------------------------------------------
     m_timer.Initialize();
@@ -187,7 +185,6 @@ bool CActiveSocket::ConnectUDP(const uint8 *pAddr, int16 nPort)
     return bRetVal;
 }
 
-
 //------------------------------------------------------------------------------
 //
 // ConnectRAW() -
@@ -228,7 +225,7 @@ bool CActiveSocket::ConnectRAW(const uint8 *pAddr, int16 nPort)
     m_stServerSockaddr.sin_port = htons(nPort);
 
     //------------------------------------------------------------------
-    // Connect to address "xxx.xxx.xxx.xxx"	(IPv4) address only.
+    // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
     //
     //------------------------------------------------------------------
     m_timer.Initialize();
@@ -247,7 +244,6 @@ bool CActiveSocket::ConnectRAW(const uint8 *pAddr, int16 nPort)
 }
 
 
-
 //------------------------------------------------------------------------------
 //
 // Open() - Create a connection to a specified address on a specified port

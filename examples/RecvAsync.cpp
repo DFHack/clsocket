@@ -25,17 +25,17 @@ void *CreateTCPEchoServer(void *param)
 
     if ((pClient = socket.Accept()) != NULL)
     {
-	while (nBytesReceived != pData->nTotalPayloadSize)
-	{
-	    if (nBytesReceived += pClient->Receive(pData->nNumBytesToReceive))
-	    {
-		pClient->Send((const uint8 *)pClient->GetData(), pClient->GetBytesReceived());
-	    }
-	}
+        while (nBytesReceived != pData->nTotalPayloadSize)
+        {
+            if (nBytesReceived += pClient->Receive(pData->nNumBytesToReceive))
+            {
+                pClient->Send((const uint8 *)pClient->GetData(), pClient->GetBytesReceived());
+            }
+        }
 
-	sleep(100);
+        sleep(100);
 
-	delete pClient;
+        delete pClient;
     }
 
     socket.Close();
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     thData.nPort = 6789;
     thData.nNumBytesToReceive = 1;
     thData.nTotalPayloadSize = (int)strlen(TEST_PACKET);
-    
+
     pthread_create(&threadId, 0, CreateTCPEchoServer, &thData);
     sleep(1); // allow a second for the thread to create and listen
 
@@ -63,30 +63,29 @@ int main(int argc, char **argv)
 
     if (client.Open((uint8 *)"127.0.0.1", 6789))
     {
-	if (client.Send((uint8 *)TEST_PACKET, strlen(TEST_PACKET)))
-	{
-	    int numBytes = -1;
-	    int bytesReceived = 0;
+        if (client.Send((uint8 *)TEST_PACKET, strlen(TEST_PACKET)))
+        {
+            int numBytes = -1;
+            int bytesReceived = 0;
 
-	    client.Select();
+            client.Select();
 
-	    while (bytesReceived != strlen(TEST_PACKET))
-	    {
-		numBytes = client.Receive(MAX_PACKET);
+            while (bytesReceived != strlen(TEST_PACKET))
+            {
+                numBytes = client.Receive(MAX_PACKET);
 
-		if (numBytes > 0)
-		{
-		    bytesReceived += numBytes;
-		    memset(result, 0, 1024);
-		    memcpy(result, client.GetData(), numBytes);
-		    printf("received: %s\n", result);
-		}
-		else
-		{
-		    printf("Recevied %d bytes\n", numBytes);
-		}
-	    }
-	}
+                if (numBytes > 0)
+                {
+                    bytesReceived += numBytes;
+                    memset(result, 0, 1024);
+                    memcpy(result, client.GetData(), numBytes);
+                    printf("received: %s\n", result);
+                }
+                else
+                {
+                    printf("Recevied %d bytes\n", numBytes);
+                }
+            }
+        }
     }
-
 }

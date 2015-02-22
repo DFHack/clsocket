@@ -49,26 +49,26 @@
 using namespace std;
 
 /// Provides a platform independent class to create an active socket.
-/// An active socket is used to create a socket which connects to a server.  
+/// An active socket is used to create a socket which connects to a server.
 /// This type of object would be used when an application needs to send/receive
-/// data from a server. 
+/// data from a server.
 class CHttpActiveSocket : public CActiveSocket {
 
 public:
-	virtual Send(const uint8 *pBuf, size_t bytesToSend);
-	virtual Receive();
+    virtual Send(const uint8 *pBuf, size_t bytesToSend);
+    virtual Receive();
 
 private:
 // date
-	string  m_szServer;
+    string  m_szServer;
 // lastmodified
-	int32   m_nContentLength;
-	string  m_szHost;
-	string  m_szContentType;
-	string  m_bConnection;
-	string  m_szSetCookie;
-	string  m_szLocation;
-	string  m_szCacheControl;
+    int32   m_nContentLength;
+    string  m_szHost;
+    string  m_szContentType;
+    string  m_bConnection;
+    string  m_szSetCookie;
+    string  m_szLocation;
+    string  m_szCacheControl;
 };
 
 #endif // __HTTPACTIVESOCKET_H__

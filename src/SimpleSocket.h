@@ -168,9 +168,9 @@ public:
     virtual bool Close(void);
 
     /// Shutdown shut down socket send and receive operations
-    ///	CShutdownMode::Receives - Disables further receive operations.
-    ///	CShutdownMode::Sends    - Disables further send operations.
-    ///	CShutdownBoth::         - Disables further send and receive operations.
+    ///    CShutdownMode::Receives - Disables further receive operations.
+    ///    CShutdownMode::Sends    - Disables further send operations.
+    ///    CShutdownBoth::         - Disables further send and receive operations.
     /// @param nShutdown specifies the type of shutdown.
     /// @return true if successfully shutdown otherwise returns false.
     virtual bool Shutdown(CShutdownMode nShutdown);

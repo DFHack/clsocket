@@ -50,7 +50,7 @@ CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 
 bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup, int16 nPort)
 {
-    bool		   bRetVal = false;
+    bool           bRetVal = false;
 #ifdef WIN32
     ULONG          inAddr;
 #else
@@ -125,7 +125,6 @@ bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup,
 }
 
 
-
 //------------------------------------------------------------------------------
 //
 // Listen() -
@@ -210,7 +209,7 @@ bool CPassiveSocket::Listen(const uint8 *pAddr, int16 nPort, int32 nConnectionBa
     return bRetVal;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Accept() -
@@ -284,7 +283,7 @@ CActiveSocket *CPassiveSocket::Accept()
     return pClientSocket;
 }
 
-
+
 //------------------------------------------------------------------------------
 //
 // Send() - Send data on a valid socket
