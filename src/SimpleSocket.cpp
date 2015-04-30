@@ -961,6 +961,7 @@ void CSimpleSocket::TranslateSocketError(void)
     case ENOBUFS:
     case ENOMEM:
     case EPROTONOSUPPORT:
+    case EPIPE:
         SetSocketError(CSimpleSocket::SocketInvalidSocket);
         break;
     case ECONNREFUSED :
@@ -993,8 +994,6 @@ void CSimpleSocket::TranslateSocketError(void)
         SetSocketError(CSimpleSocket::SocketInvalidSocketBuffer);
         break;
     case ECONNRESET:
-        SetSocketError(CSimpleSocket::SocketConnectionReset);
-        break;
     case ENOPROTOOPT:
         SetSocketError(CSimpleSocket::SocketConnectionReset);
         break;
