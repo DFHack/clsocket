@@ -206,6 +206,13 @@ public:
     /// class.
     void TranslateSocketError(void);
 
+    /// Returns a human-readable description of the given error code
+    /// or the last error code of a socket
+    static const char *DescribeError(CSocketError err);
+    inline const char *DescribeError() {
+        return DescribeError(m_socketErrno);
+    };
+
     /// Attempts to receive a block of data on an established connection.
     /// @param nMaxBytes maximum number of bytes to receive.
     /// @return number of bytes actually received.
