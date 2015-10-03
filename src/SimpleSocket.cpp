@@ -1107,7 +1107,7 @@ const char *CSimpleSocket::DescribeError(CSocketError err)
         case CSimpleSocket::SocketInvalidPointer:
             return "Pointer type supplied as argument is invalid.";
         case CSimpleSocket::SocketEunknown:
-            return "Unknown error please report to mark@carrierlabs.com";
+            return "Unknown error";
         default:
             return "No such CSimpleSocket error";
     }
