@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     // Create a connection to the time server so that data can be sent
     // and received.
     //--------------------------------------------------------------------------
-    if (socket.Open((const uint8 *)"time-C.timefreq.bldrdoc.gov", 13))
+    if (socket.Open("time-C.timefreq.bldrdoc.gov", 13))
     {
         //----------------------------------------------------------------------
         // Send a requtest the server requesting the current time.
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------------------
     socket.Initialize();
 
-    socket.Listen((const uint8 *)"127.0.0.1", 6789);
+    socket.Listen("127.0.0.1", 6789);
 
     while (true)
     {
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
                 //------------------------------------------------------------------
                 // Send response to client and close connection to the client.
                 //------------------------------------------------------------------
-                pClient->Send((const uint8 *)pClient->GetData(), pClient->GetBytesReceived());
+                pClient->Send( pClient->GetData(), pClient->GetBytesReceived() );
                 pClient->Close();
             }
 
