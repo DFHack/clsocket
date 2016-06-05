@@ -6,10 +6,10 @@
 
 struct thread_data
 {
-    char     *pszServerAddr;
-    short int nPort;
-    int       nNumBytesToReceive;
-    int       nTotalPayloadSize;
+    const char *pszServerAddr;
+    short int   nPort;
+    int         nNumBytesToReceive;
+    int         nTotalPayloadSize;
 };
 
 
@@ -79,11 +79,11 @@ int main(int argc, char **argv)
                     bytesReceived += numBytes;
                     memset(result, 0, 1024);
                     memcpy(result, client.GetData(), numBytes);
-                    printf("received: %s\n", result);
+                    printf("received %d bytes: '%s'\n", numBytes, result);
                 }
                 else
                 {
-                    printf("Recevied %d bytes\n", numBytes);
+                    printf("Received %d bytes\n", numBytes);
                 }
             }
         }
