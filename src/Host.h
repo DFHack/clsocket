@@ -103,9 +103,16 @@ extern "C"
 #endif
 
 #ifdef WIN32
-  #define UINT8_MAX  (UCHAR_MAX)
-  #define UINT16_MAX (USHRT_MAX)
-  #define UINT32_MAX (ULONG_MAX)
+
+  #ifndef UINT8_MAX
+    #define UINT8_MAX  (UCHAR_MAX)
+  #endif
+  #ifndef UINT16_MAX
+    #define UINT16_MAX (USHRT_MAX)
+  #endif
+  #ifndef UINT32_MAX
+    #define UINT32_MAX (ULONG_MAX)
+  #endif
 
   #if __WORDSIZE == 64
     #define SIZE_MAX (18446744073709551615UL)

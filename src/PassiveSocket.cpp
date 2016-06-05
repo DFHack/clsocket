@@ -48,7 +48,7 @@ CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 {
 }
 
-bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup, int16 nPort)
+bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup, uint16 nPort)
 {
     bool           bRetVal = false;
 #ifdef WIN32
@@ -130,7 +130,7 @@ bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup,
 // Listen() -
 //
 //------------------------------------------------------------------------------
-bool CPassiveSocket::Listen(const uint8 *pAddr, int16 nPort, int32 nConnectionBacklog)
+bool CPassiveSocket::Listen(const uint8 *pAddr, uint16 nPort, int32 nConnectionBacklog)
 {
     bool           bRetVal = false;
 #ifdef WIN32

@@ -276,7 +276,7 @@ int32 CSimpleSocket::GetSocketDscp(void)
 // GetWindowSize()
 //
 //------------------------------------------------------------------------------
-uint16 CSimpleSocket::GetWindowSize(uint32 nOptionName)
+uint32 CSimpleSocket::GetWindowSize(uint32 nOptionName)
 {
     uint32 nTcpWinSize = 0;
 
@@ -307,7 +307,7 @@ uint16 CSimpleSocket::GetWindowSize(uint32 nOptionName)
 // SetWindowSize()
 //
 //------------------------------------------------------------------------------
-uint16 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
+uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
 {
     uint32 nRetVal = 0;
 
@@ -324,7 +324,7 @@ uint16 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
         SetSocketError(CSimpleSocket::SocketInvalidSocket);
     }
 
-    return (uint16)nWindowSize;
+    return nWindowSize;
 }
 
 

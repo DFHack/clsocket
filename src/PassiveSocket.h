@@ -82,7 +82,7 @@ public:
     ///      condiitions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
     ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
     ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
-    bool BindMulticast(const uint8 *pInterface, const uint8 *pGroup, int16 nPort);
+    bool BindMulticast(const uint8 *pInterface, const uint8 *pGroup, uint16 nPort);
 
     /// Create a listening socket at local ip address 'x.x.x.x' or 'localhost'
     /// if pAddr is NULL on port nPort.
@@ -92,10 +92,10 @@ public:
     ///  @param nConnectionBacklog specifies connection queue backlog (default 30,000)
     ///  @return true if a listening socket was created.
     ///      If not successful, the false is returned and one of the following error
-    ///      condiitions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
+    ///      conditions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
     ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
     ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
-    virtual bool Listen(const uint8 *pAddr, int16 nPort, int32 nConnectionBacklog = 30000);
+    virtual bool Listen(const uint8 *pAddr, uint16 nPort, int32 nConnectionBacklog = 30000);
 
     /// Attempts to send a block of data on an established connection.
     /// @param pBuf block of data to be sent.
