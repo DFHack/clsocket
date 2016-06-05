@@ -382,7 +382,7 @@ public:
 
     /// Bind socket to a specific interface when using multicast.
     /// @return true if successfully bound to interface
-    bool BindInterface(uint8 *pInterface);
+    bool BindInterface(const char *pInterface);
 
     /// Gets the timeout value that specifies the maximum number of seconds a
     /// a call to CSimpleSocket::Send waits until it completes.
@@ -448,8 +448,8 @@ public:
 
     /// Returns clients Internet host address as a string in standard numbers-and-dots notation.
     ///  @return NULL if invalid
-    uint8 *GetClientAddr() {
-        return (uint8 *)inet_ntoa(m_stClientSockaddr.sin_addr);
+    const char *GetClientAddr() {
+        return inet_ntoa(m_stClientSockaddr.sin_addr);
     };
 
     /// Returns the port number on which the client is connected.
@@ -460,8 +460,8 @@ public:
 
     /// Returns server Internet host address as a string in standard numbers-and-dots notation.
     ///  @return NULL if invalid
-    uint8 *GetServerAddr() {
-        return (uint8 *)inet_ntoa(m_stServerSockaddr.sin_addr);
+    const char *GetServerAddr() {
+        return inet_ntoa(m_stServerSockaddr.sin_addr);
     };
 
     /// Returns the port number on which the server is connected.

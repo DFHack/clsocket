@@ -164,7 +164,7 @@ bool CSimpleSocket::Initialize()
 // BindInterface()
 //
 //------------------------------------------------------------------------------
-bool CSimpleSocket::BindInterface(uint8 *pInterface)
+bool CSimpleSocket::BindInterface(const char *pInterface)
 {
     bool           bRetVal = false;
     struct in_addr stInterfaceAddr;
@@ -173,7 +173,7 @@ bool CSimpleSocket::BindInterface(uint8 *pInterface)
     {
         if (pInterface)
         {
-            stInterfaceAddr.s_addr= inet_addr((const char *)pInterface);
+            stInterfaceAddr.s_addr= inet_addr(pInterface);
             if (SETSOCKOPT(m_socket, IPPROTO_IP, IP_MULTICAST_IF, &stInterfaceAddr, sizeof(stInterfaceAddr)) == SocketSuccess)
             {
                 bRetVal = true;

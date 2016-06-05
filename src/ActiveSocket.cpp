@@ -51,7 +51,7 @@ CActiveSocket::CActiveSocket(CSocketType nType) : CSimpleSocket(nType)
 // ConnectTCP() -
 //
 //------------------------------------------------------------------------------
-bool CActiveSocket::ConnectTCP(const uint8 *pAddr, uint16 nPort)
+bool CActiveSocket::ConnectTCP(const char *pAddr, uint16 nPort)
 {
     bool           bRetVal = false;
     struct in_addr stIpAddress;
@@ -131,7 +131,7 @@ bool CActiveSocket::ConnectTCP(const uint8 *pAddr, uint16 nPort)
 // ConnectUDP() -
 //
 //------------------------------------------------------------------------------
-bool CActiveSocket::ConnectUDP(const uint8 *pAddr, uint16 nPort)
+bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
 {
     bool           bRetVal = false;
     struct in_addr stIpAddress;
@@ -190,7 +190,7 @@ bool CActiveSocket::ConnectUDP(const uint8 *pAddr, uint16 nPort)
 // ConnectRAW() -
 //
 //------------------------------------------------------------------------------
-bool CActiveSocket::ConnectRAW(const uint8 *pAddr, uint16 nPort)
+bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
 {
     bool           bRetVal = false;
     struct in_addr stIpAddress;
@@ -249,7 +249,7 @@ bool CActiveSocket::ConnectRAW(const uint8 *pAddr, uint16 nPort)
 // Open() - Create a connection to a specified address on a specified port
 //
 //------------------------------------------------------------------------------
-bool CActiveSocket::Open(const uint8 *pAddr, uint16 nPort)
+bool CActiveSocket::Open(const char *pAddr, uint16 nPort)
 {
     bool bRetVal = false;
 
