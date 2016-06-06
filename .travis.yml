@@ -1,0 +1,30 @@
+sudo: false
+language: cpp
+matrix:
+  include:
+    - env: GCC_VERSION=4.5
+      addons:
+        apt:
+          packages:
+            - gcc-4.5-multilib
+            - g++-4.5-multilib
+    - env: GCC_VERSION=4.8
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-4.8-multilib
+            - g++-4.8-multilib
+script:
+- mkdir build-travis
+- cd build-travis
+- cmake .. -DCMAKE_C_COMPILER=gcc-$GCC_VERSION -DCMAKE_CXX_COMPILER=g++-$GCC_VERSION -DCLSOCKET_EXAMPLES:BOOL=ON
+- make -j3
+notifications:
+  email: false
+  irc:
+    channels:
+      - "chat.freenode.net#dfhack"
+    on_success: change
+    on_failure: always
