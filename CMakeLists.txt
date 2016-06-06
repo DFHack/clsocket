@@ -87,6 +87,12 @@ if(UNIX)
         if(NOT CLSOCKET_DEP_ONLY)
             install(TARGETS clsocket-example DESTINATION bin)
         endif()
+
+        ADD_EXECUTABLE(querydaytime-example examples/QueryDayTime.cpp)
+        TARGET_LINK_LIBRARIES(querydaytime-example clsocket)
+
+        ADD_EXECUTABLE(echoserver-example examples/EchoServer.cpp)
+        TARGET_LINK_LIBRARIES(echoserver-example clsocket)
     endif()
 endif()
 
