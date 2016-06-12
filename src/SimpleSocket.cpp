@@ -164,7 +164,7 @@ bool CSimpleSocket::Initialize()
 // BindInterface()
 //
 //------------------------------------------------------------------------------
-bool CSimpleSocket::BindInterface(uint8 *pInterface)
+bool CSimpleSocket::BindInterface(const char *pInterface)
 {
     bool           bRetVal = false;
     struct in_addr stInterfaceAddr;
@@ -173,7 +173,7 @@ bool CSimpleSocket::BindInterface(uint8 *pInterface)
     {
         if (pInterface)
         {
-            stInterfaceAddr.s_addr= inet_addr((const char *)pInterface);
+            stInterfaceAddr.s_addr= inet_addr(pInterface);
             if (SETSOCKOPT(m_socket, IPPROTO_IP, IP_MULTICAST_IF, &stInterfaceAddr, sizeof(stInterfaceAddr)) == SocketSuccess)
             {
                 bRetVal = true;
@@ -276,7 +276,7 @@ int32 CSimpleSocket::GetSocketDscp(void)
 // GetWindowSize()
 //
 //------------------------------------------------------------------------------
-uint16 CSimpleSocket::GetWindowSize(uint32 nOptionName)
+uint32 CSimpleSocket::GetWindowSize(uint32 nOptionName)
 {
     uint32 nTcpWinSize = 0;
 
@@ -307,7 +307,7 @@ uint16 CSimpleSocket::GetWindowSize(uint32 nOptionName)
 // SetWindowSize()
 //
 //------------------------------------------------------------------------------
-uint16 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
+uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
 {
     uint32 nRetVal = 0;
 
@@ -324,7 +324,7 @@ uint16 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
         SetSocketError(CSimpleSocket::SocketInvalidSocket);
     }
 
-    return (uint16)nWindowSize;
+    return nWindowSize;
 }
 
 
@@ -712,7 +712,7 @@ bool CSimpleSocket::SetOptionLinger(bool bEnable, uint16 nTime)
 //             of scope.
 //
 //------------------------------------------------------------------------------
-int32 CSimpleSocket::Receive(int32 nMaxBytes)
+int32 CSimpleSocket::Receive(int32 nMaxBytes, uint8 * pBuffer )
 {
     m_nBytesReceived = 0;
 
@@ -724,23 +724,29 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes)
         return m_nBytesReceived;
     }
 
-    //--------------------------------------------------------------------------
-    // Free existing buffer and allocate a new buffer the size of
-    // nMaxBytes.
-    //--------------------------------------------------------------------------
-    if ((m_pBuffer != NULL) && (nMaxBytes != m_nBufferSize))
+    uint8 * pWorkBuffer = pBuffer;
+    if ( pBuffer == NULL )
     {
-        delete [] m_pBuffer;
-        m_pBuffer = NULL;
-    }
+        //--------------------------------------------------------------------------
+        // Free existing buffer and allocate a new buffer the size of
+        // nMaxBytes.
+        //--------------------------------------------------------------------------
+        if ((m_pBuffer != NULL) && (nMaxBytes != m_nBufferSize))
+        {
+            delete [] m_pBuffer;
+            m_pBuffer = NULL;
+        }
 
-    //--------------------------------------------------------------------------
-    // Allocate a new internal buffer to receive data.
-    //--------------------------------------------------------------------------
-    if (m_pBuffer == NULL)
-    {
-        m_nBufferSize = nMaxBytes;
-        m_pBuffer = new uint8[nMaxBytes];
+        //--------------------------------------------------------------------------
+        // Allocate a new internal buffer to receive data.
+        //--------------------------------------------------------------------------
+        if (m_pBuffer == NULL)
+        {
+            m_nBufferSize = nMaxBytes;
+            m_pBuffer = new uint8[nMaxBytes];
+        }
+
+        pWorkBuffer = m_pBuffer;
     }
 
     SetSocketError(SocketSuccess);
@@ -758,7 +764,7 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes)
     {
         do
         {
-            m_nBytesReceived = RECV(m_socket, (m_pBuffer + m_nBytesReceived),
+            m_nBytesReceived = RECV(m_socket, (pWorkBuffer + m_nBytesReceived),
                                     nMaxBytes, m_nFlags);
             TranslateSocketError();
         } while ((GetSocketError() == CSimpleSocket::SocketInterrupted));
@@ -775,7 +781,7 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes)
         {
             do
             {
-                m_nBytesReceived = RECVFROM(m_socket, m_pBuffer, nMaxBytes, 0,
+                m_nBytesReceived = RECVFROM(m_socket, pWorkBuffer, nMaxBytes, 0,
                                             &m_stMulticastGroup, &srcSize);
                 TranslateSocketError();
             } while (GetSocketError() == CSimpleSocket::SocketInterrupted);
@@ -784,7 +790,7 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes)
         {
             do
             {
-                m_nBytesReceived = RECVFROM(m_socket, m_pBuffer, nMaxBytes, 0,
+                m_nBytesReceived = RECVFROM(m_socket, pWorkBuffer, nMaxBytes, 0,
                                             &m_stClientSockaddr, &srcSize);
                 TranslateSocketError();
             } while (GetSocketError() == CSimpleSocket::SocketInterrupted);

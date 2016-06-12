@@ -48,7 +48,7 @@ CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 {
 }
 
-bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup, int16 nPort)
+bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort)
 {
     bool           bRetVal = false;
 #ifdef WIN32
@@ -73,13 +73,13 @@ bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup,
     // If no IP Address (interface ethn) is supplied, or the loop back is
     // specified then bind to any interface, else bind to specified interface.
     //--------------------------------------------------------------------------
-    if ((pInterface == NULL) || (!strlen((const char *)pInterface)))
+    if ((pInterface == NULL) || (!strlen(pInterface)))
     {
         m_stMulticastGroup.sin_addr.s_addr = htonl(INADDR_ANY);
     }
     else
     {
-        if ((inAddr = inet_addr((const char *)pInterface)) != INADDR_NONE)
+        if ((inAddr = inet_addr(pInterface)) != INADDR_NONE)
         {
             m_stMulticastGroup.sin_addr.s_addr = inAddr;
         }
@@ -93,7 +93,7 @@ bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup,
         //----------------------------------------------------------------------
         // Join the multicast group
         //----------------------------------------------------------------------
-        m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr((const char *)pGroup);
+        m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr(pGroup);
         m_stMulticastRequest.imr_interface.s_addr = m_stMulticastGroup.sin_addr.s_addr;
 
         if (SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
@@ -130,7 +130,7 @@ bool CPassiveSocket::BindMulticast(const uint8 *pInterface, const uint8 *pGroup,
 // Listen() -
 //
 //------------------------------------------------------------------------------
-bool CPassiveSocket::Listen(const uint8 *pAddr, int16 nPort, int32 nConnectionBacklog)
+bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBacklog)
 {
     bool           bRetVal = false;
 #ifdef WIN32
@@ -160,13 +160,13 @@ bool CPassiveSocket::Listen(const uint8 *pAddr, int16 nPort, int32 nConnectionBa
     // If no IP Address (interface ethn) is supplied, or the loop back is
     // specified then bind to any interface, else bind to specified interface.
     //--------------------------------------------------------------------------
-    if ((pAddr == NULL) || (!strlen((const char *)pAddr)))
+    if ((pAddr == NULL) || (!strlen(pAddr)))
     {
         m_stServerSockaddr.sin_addr.s_addr = htonl(INADDR_ANY);
     }
     else
     {
-        if ((inAddr = inet_addr((const char *)pAddr)) != INADDR_NONE)
+        if ((inAddr = inet_addr(pAddr)) != INADDR_NONE)
         {
             m_stServerSockaddr.sin_addr.s_addr = inAddr;
         }

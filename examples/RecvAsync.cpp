@@ -1,15 +1,25 @@
 #include <pthread.h>
 #include "PassiveSocket.h"
 
+#ifdef WIN32
+#include <windows.h>
+
+  // usually defined with #include <unistd.h>
+  static void sleep( unsigned int seconds )
+  {
+    Sleep( seconds * 1000 );
+  }
+#endif
+
 #define MAX_PACKET  4096
 #define TEST_PACKET "Test Packet"
 
 struct thread_data
 {
-    char     *pszServerAddr;
-    short int nPort;
-    int       nNumBytesToReceive;
-    int       nTotalPayloadSize;
+    const char *pszServerAddr;
+    short int   nPort;
+    int         nNumBytesToReceive;
+    int         nTotalPayloadSize;
 };
 
 
@@ -21,7 +31,7 @@ void *CreateTCPEchoServer(void *param)
     int            nBytesReceived = 0;
 
     socket.Initialize();
-    socket.Listen((const uint8 *)pData->pszServerAddr, pData->nPort);
+    socket.Listen(pData->pszServerAddr, pData->nPort);
 
     if ((pClient = socket.Accept()) != NULL)
     {
@@ -61,7 +71,7 @@ int main(int argc, char **argv)
     client.Initialize();
     client.SetNonblocking();
 
-    if (client.Open((uint8 *)"127.0.0.1", 6789))
+    if (client.Open("127.0.0.1", 6789))
     {
         if (client.Send((uint8 *)TEST_PACKET, strlen(TEST_PACKET)))
         {
@@ -79,11 +89,11 @@ int main(int argc, char **argv)
                     bytesReceived += numBytes;
                     memset(result, 0, 1024);
                     memcpy(result, client.GetData(), numBytes);
-                    printf("received: %s\n", result);
+                    printf("received %d bytes: '%s'\n", numBytes, result);
                 }
                 else
                 {
-                    printf("Recevied %d bytes\n", numBytes);
+                    printf("Received %d bytes\n", numBytes);
                 }
             }
         }

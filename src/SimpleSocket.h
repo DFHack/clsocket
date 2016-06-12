@@ -215,10 +215,13 @@ public:
 
     /// Attempts to receive a block of data on an established connection.
     /// @param nMaxBytes maximum number of bytes to receive.
+    /// @param pBuffer, memory where to receive the data,
+    ///        NULL receives to internal buffer returned with GetData()
+    ///        Non-NULL receives directly there, but GetData() will return WRONG ptr!
     /// @return number of bytes actually received.
     /// @return of zero means the connection has been shutdown on the other side.
     /// @return of -1 means that an error has occurred.
-    virtual int32 Receive(int32 nMaxBytes = 1);
+    virtual int32 Receive(int32 nMaxBytes = 1, uint8 * pBuffer = 0);
 
     /// Attempts to send a block of data on an established connection.
     /// @param pBuf block of data to be sent.
@@ -382,7 +385,7 @@ public:
 
     /// Bind socket to a specific interface when using multicast.
     /// @return true if successfully bound to interface
-    bool BindInterface(uint8 *pInterface);
+    bool BindInterface(const char *pInterface);
 
     /// Gets the timeout value that specifies the maximum number of seconds a
     /// a call to CSimpleSocket::Send waits until it completes.
@@ -448,53 +451,53 @@ public:
 
     /// Returns clients Internet host address as a string in standard numbers-and-dots notation.
     ///  @return NULL if invalid
-    uint8 *GetClientAddr() {
-        return (uint8 *)inet_ntoa(m_stClientSockaddr.sin_addr);
+    const char *GetClientAddr() {
+        return inet_ntoa(m_stClientSockaddr.sin_addr);
     };
 
     /// Returns the port number on which the client is connected.
     ///  @return client port number.
-    int16 GetClientPort() {
+    uint16 GetClientPort() {
         return m_stClientSockaddr.sin_port;
     };
 
     /// Returns server Internet host address as a string in standard numbers-and-dots notation.
     ///  @return NULL if invalid
-    uint8 *GetServerAddr() {
-        return (uint8 *)inet_ntoa(m_stServerSockaddr.sin_addr);
+    const char *GetServerAddr() {
+        return inet_ntoa(m_stServerSockaddr.sin_addr);
     };
 
     /// Returns the port number on which the server is connected.
     ///  @return server port number.
-    int16 GetServerPort() {
+    uint16 GetServerPort() {
         return ntohs(m_stServerSockaddr.sin_port);
     };
 
     /// Get the TCP receive buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the receive buffer to twice the value passed.
     ///  @return zero on failure else the number of bytes of the TCP receive buffer window size if successful.
-    uint16 GetReceiveWindowSize() {
+    uint32 GetReceiveWindowSize() {
         return GetWindowSize(SO_RCVBUF);
     };
 
     /// Get the TCP send buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the send buffer to twice the value passed.
     ///  @return zero on failure else the number of bytes of the TCP receive buffer window size if successful.
-    uint16 GetSendWindowSize() {
+    uint32 GetSendWindowSize() {
         return GetWindowSize(SO_SNDBUF);
     };
 
     /// Set the TCP receive buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the receive buffer to twice the value passed.
     ///  @return zero on failure else the number of bytes of the TCP send buffer window size if successful.
-    uint16 SetReceiveWindowSize(uint16 nWindowSize) {
+    uint32 SetReceiveWindowSize(uint32 nWindowSize) {
         return SetWindowSize(SO_RCVBUF, nWindowSize);
     };
 
     /// Set the TCP send buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the send buffer to twice the value passed.
     ///  @return zero on failure else the number of bytes of the TCP send buffer window size if successful.
-    uint16 SetSendWindowSize(uint16 nWindowSize) {
+    uint32 SetSendWindowSize(uint32 nWindowSize) {
         return SetWindowSize(SO_SNDBUF, nWindowSize);
     };
 
@@ -523,11 +526,11 @@ protected:
 private:
     /// Generic function used to get the send/receive window size
     ///  @return zero on failure else the number of bytes of the TCP window size if successful.
-    uint16 GetWindowSize(uint32 nOptionName);
+    uint32 GetWindowSize(uint32 nOptionName);
 
     /// Generic function used to set the send/receive window size
     ///  @return zero on failure else the number of bytes of the TCP window size if successful.
-    uint16 SetWindowSize(uint32 nOptionName, uint32 nWindowSize);
+    uint32 SetWindowSize(uint32 nOptionName, uint32 nWindowSize);
 
 
     /// Attempts to send at most nNumItem blocks described by sendVector

@@ -103,9 +103,16 @@ extern "C"
 #endif
 
 #ifdef WIN32
-  #define UINT8_MAX  (UCHAR_MAX)
-  #define UINT16_MAX (USHRT_MAX)
-  #define UINT32_MAX (ULONG_MAX)
+
+  #ifndef UINT8_MAX
+    #define UINT8_MAX  (UCHAR_MAX)
+  #endif
+  #ifndef UINT16_MAX
+    #define UINT16_MAX (USHRT_MAX)
+  #endif
+  #ifndef UINT32_MAX
+    #define UINT32_MAX (ULONG_MAX)
+  #endif
 
   #if __WORDSIZE == 64
     #define SIZE_MAX (18446744073709551615UL)
@@ -166,7 +173,7 @@ extern "C"
 #define WRITEV(a,b,c)          Writev(b, c)
 #define GETSOCKOPT(a,b,c,d,e)  getsockopt(a,b,c,(char *)d, (int *)e)
 #define SETSOCKOPT(a,b,c,d,e)  setsockopt(a,b,c,(char *)d, (int)e)
-#define GETHOSTBYNAME(a)       gethostbyname((const char *)a)
+#define GETHOSTBYNAME(a)       gethostbyname(a)
 #endif
 
 #if defined(_LINUX) || defined(_DARWIN)
@@ -189,7 +196,7 @@ extern "C"
 #define WRITEV(a,b,c)          writev(a, b, c)
 #define GETSOCKOPT(a,b,c,d,e)  getsockopt((int)a,(int)b,(int)c,(void *)d,(socklen_t *)e)
 #define SETSOCKOPT(a,b,c,d,e)  setsockopt((int)a,(int)b,(int)c,(const void *)d,(int)e)
-#define GETHOSTBYNAME(a)       gethostbyname((const char *)a)
+#define GETHOSTBYNAME(a)       gethostbyname(a)
 #endif
 
 
