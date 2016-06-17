@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(clsocket)
 
+
 # set up versioning.
 set(BUILD_MAJOR "1")
 set(BUILD_MINOR "4")
@@ -44,6 +45,12 @@ elseif(WIN32)
     SET(PROJECT_LIBS Ws2_32.lib)
     if(MINGW)
         # Special MINGW stuff here
+        # see https://cmake.org/pipermail/cmake/2012-September/051970.html
+        # see http://stackoverflow.com/questions/13768515/how-to-do-static-linking-of-libwinpthread-1-dll-in-mingw
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static -static-libgcc")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++")
+        set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "${CMAKE_SHARED_LIBRARY_LINK_C_FLAGS} -static -static-libgcc -s")
+        set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS} -static -static-libgcc -static-libstdc++ -s")
     elseif(MSVC)
         # Special MSVC stuff here
         add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
@@ -83,7 +90,7 @@ endif()
 set_target_properties(clsocket PROPERTIES VERSION ${BUILD_VERSION}
                                           SOVERSION ${BUILD_MAJOR})
 
-if(UNIX)
+if(UNIX OR (WIN32 AND MINGW))
     OPTION(CLSOCKET_EXAMPLES "Build the examples" OFF)
 
     if(CLSOCKET_EXAMPLES)
