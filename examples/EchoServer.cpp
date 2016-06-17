@@ -6,7 +6,7 @@
 int main(int argc, char **argv)
 {
     CPassiveSocket socket;
-    CActiveSocket *pClient = NULL;
+    CSimpleSocket *pClient = NULL;
 
     //--------------------------------------------------------------------------
     // Initialize our socket object 

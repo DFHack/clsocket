@@ -48,6 +48,12 @@ CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 {
 }
 
+CPassiveSocket::~CPassiveSocket()
+{
+    Close();
+}
+
+
 bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort)
 {
     bool           bRetVal = false;
@@ -212,10 +218,10 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
 // Accept() -
 //
 //------------------------------------------------------------------------------
-CActiveSocket *CPassiveSocket::Accept()
+CSimpleSocket *CPassiveSocket::Accept()
 {
     uint32         nSockLen;
-    CActiveSocket *pClientSocket = NULL;
+    CSimpleSocket *pClientSocket = NULL;
     SOCKET         socket = CSimpleSocket::SocketError;
 
     if (m_nSocketType != CSimpleSocket::SocketTypeTcp)
@@ -224,7 +230,7 @@ CActiveSocket *CPassiveSocket::Accept()
         return pClientSocket;
     }
 
-    pClientSocket = new CActiveSocket();
+    pClientSocket = new CSimpleSocket();
 
     //--------------------------------------------------------------------------
     // Wait for incoming connection.

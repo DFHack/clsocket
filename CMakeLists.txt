@@ -20,7 +20,6 @@ src/StatTimer.h
 
 SET(CLSOCKET_SOURCES
 src/SimpleSocket.cpp
-src/ActiveSocket.cpp
 src/PassiveSocket.cpp
 )
 

@@ -114,6 +114,17 @@ CSimpleSocket::CSimpleSocket(CSimpleSocket &socket)
     memcpy(m_pBuffer, socket.m_pBuffer, socket.m_nBufferSize);
 }
 
+CSimpleSocket::~CSimpleSocket()
+{
+    if (m_pBuffer != NULL)
+    {
+        delete [] m_pBuffer;
+        m_pBuffer = NULL;
+    }
+
+    Close();
+}
+
 CSimpleSocket *CSimpleSocket::operator=(CSimpleSocket &socket)
 {
     if (m_nBufferSize != socket.m_nBufferSize)
@@ -125,6 +136,207 @@ CSimpleSocket *CSimpleSocket::operator=(CSimpleSocket &socket)
     }
 
     return this;
+}
+
+
+//------------------------------------------------------------------------------
+//
+// ConnectTCP() -
+//
+//------------------------------------------------------------------------------
+bool CSimpleSocket::ConnectTCP(const char *pAddr, uint16 nPort)
+{
+    bool           bRetVal = false;
+    struct in_addr stIpAddress;
+
+    //------------------------------------------------------------------
+    // Preconnection setup that must be preformed
+    //------------------------------------------------------------------
+    memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
+    m_stServerSockaddr.sin_family = AF_INET;
+
+    struct hostent *pHE = GETHOSTBYNAME(pAddr);
+    if (pHE == NULL)
+    {
+#ifdef WIN32
+        TranslateSocketError();
+#else
+        if (h_errno == HOST_NOT_FOUND)
+        {
+            SetSocketError(SocketInvalidAddress);
+        }
+#endif
+        return bRetVal;
+    }
+
+    memcpy(&stIpAddress, pHE->h_addr_list[0], pHE->h_length);
+    m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
+
+    if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
+    {
+        TranslateSocketError();
+        return bRetVal;
+    }
+
+    m_stServerSockaddr.sin_port = htons(nPort);
+
+    //------------------------------------------------------------------
+    // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
+    //
+    //------------------------------------------------------------------
+    m_timer.Initialize();
+    m_timer.SetStartTime();
+
+    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) ==
+            CSimpleSocket::SocketError)
+    {
+        //--------------------------------------------------------------
+        // Get error value this might be a non-blocking socket so we
+        // must first check.
+        //--------------------------------------------------------------
+        TranslateSocketError();
+
+        //--------------------------------------------------------------
+        // If the socket is non-blocking and the current socket error
+        // is SocketEinprogress or SocketEwouldblock then poll connection
+        // with select for designated timeout period.
+        // Linux returns EINPROGRESS and Windows returns WSAEWOULDBLOCK.
+        //--------------------------------------------------------------
+        if ((IsNonblocking()) &&
+                ((GetSocketError() == CSimpleSocket::SocketEwouldblock) ||
+                 (GetSocketError() == CSimpleSocket::SocketEinprogress)))
+        {
+            bRetVal = Select(GetConnectTimeoutSec(), GetConnectTimeoutUSec());
+        }
+    }
+    else
+    {
+        TranslateSocketError();
+        bRetVal = true;
+    }
+
+    m_timer.SetEndTime();
+
+    return bRetVal;
+}
+
+//------------------------------------------------------------------------------
+//
+// ConnectUDP() -
+//
+//------------------------------------------------------------------------------
+bool CSimpleSocket::ConnectUDP(const char *pAddr, uint16 nPort)
+{
+    bool           bRetVal = false;
+    struct in_addr stIpAddress;
+
+    //------------------------------------------------------------------
+    // Pre-connection setup that must be preformed
+    //------------------------------------------------------------------
+    memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
+    m_stServerSockaddr.sin_family = AF_INET;
+
+    struct hostent *pHE = GETHOSTBYNAME(pAddr);
+    if (pHE == NULL)
+    {
+#ifdef WIN32
+        TranslateSocketError();
+#else
+        if (h_errno == HOST_NOT_FOUND)
+        {
+            SetSocketError(SocketInvalidAddress);
+        }
+#endif
+        return bRetVal;
+    }
+
+    memcpy(&stIpAddress, pHE->h_addr_list[0], pHE->h_length);
+    m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
+
+    if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
+    {
+        TranslateSocketError();
+        return bRetVal;
+    }
+
+    m_stServerSockaddr.sin_port = htons(nPort);
+
+    //------------------------------------------------------------------
+    // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
+    //
+    //------------------------------------------------------------------
+    m_timer.Initialize();
+    m_timer.SetStartTime();
+
+    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
+    {
+        bRetVal = true;
+    }
+
+    TranslateSocketError();
+
+    m_timer.SetEndTime();
+
+    return bRetVal;
+}
+
+//------------------------------------------------------------------------------
+//
+// ConnectRAW() -
+//
+//------------------------------------------------------------------------------
+bool CSimpleSocket::ConnectRAW(const char *pAddr, uint16 nPort)
+{
+    bool           bRetVal = false;
+    struct in_addr stIpAddress;
+    //------------------------------------------------------------------
+    // Pre-connection setup that must be preformed
+    //------------------------------------------------------------------
+    memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
+    m_stServerSockaddr.sin_family = AF_INET;
+
+    struct hostent *pHE = GETHOSTBYNAME(pAddr);
+    if (pHE == NULL)
+    {
+#ifdef WIN32
+        TranslateSocketError();
+#else
+        if (h_errno == HOST_NOT_FOUND)
+        {
+            SetSocketError(SocketInvalidAddress);
+        }
+#endif
+        return bRetVal;
+    }
+
+    memcpy(&stIpAddress, pHE->h_addr_list[0], pHE->h_length);
+    m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
+
+    if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
+    {
+        TranslateSocketError();
+        return bRetVal;
+    }
+
+    m_stServerSockaddr.sin_port = htons(nPort);
+
+    //------------------------------------------------------------------
+    // Connect to address "xxx.xxx.xxx.xxx"    (IPv4) address only.
+    //
+    //------------------------------------------------------------------
+    m_timer.Initialize();
+    m_timer.SetStartTime();
+
+    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
+    {
+        bRetVal = true;
+    }
+
+    TranslateSocketError();
+
+    m_timer.SetEndTime();
+
+    return bRetVal;
 }
 
 
@@ -156,6 +368,72 @@ bool CSimpleSocket::Initialize()
     TranslateSocketError();
 
     return (IsSocketValid());
+}
+
+
+//------------------------------------------------------------------------------
+//
+// Open() - Create a connection to a specified address on a specified port
+//
+//------------------------------------------------------------------------------
+bool CSimpleSocket::Open(const char *pAddr, uint16 nPort)
+{
+    bool bRetVal = false;
+
+    if (IsSocketValid() == false)
+    {
+        SetSocketError(CSimpleSocket::SocketInvalidSocket);
+        return bRetVal;
+    }
+
+    if (pAddr == NULL)
+    {
+        SetSocketError(CSimpleSocket::SocketInvalidAddress);
+        return bRetVal;
+    }
+
+    if (nPort == 0)
+    {
+        SetSocketError(CSimpleSocket::SocketInvalidPort);
+        return bRetVal;
+    }
+
+    switch (m_nSocketType)
+    {
+    case CSimpleSocket::SocketTypeTcp :
+    {
+        bRetVal = ConnectTCP(pAddr, nPort);
+        break;
+    }
+    case CSimpleSocket::SocketTypeUdp :
+    {
+        bRetVal = ConnectUDP(pAddr, nPort);
+        break;
+    }
+    case CSimpleSocket::SocketTypeRaw :
+        break;
+    default:
+        break;
+    }
+
+    //--------------------------------------------------------------------------
+    // If successful then create a local copy of the address and port
+    //--------------------------------------------------------------------------
+    if (bRetVal)
+    {
+        socklen_t nSockLen = sizeof(struct sockaddr);
+
+        memset(&m_stServerSockaddr, 0, nSockLen);
+        getpeername(m_socket, (struct sockaddr *)&m_stServerSockaddr, &nSockLen);
+
+        nSockLen = sizeof(struct sockaddr);
+        memset(&m_stClientSockaddr, 0, nSockLen);
+        getsockname(m_socket, (struct sockaddr *)&m_stClientSockaddr, &nSockLen);
+
+        SetSocketError(SocketSuccess);
+    }
+
+    return bRetVal;
 }
 
 
@@ -436,7 +714,9 @@ int32 CSimpleSocket::Send(const uint8 *pBuf, size_t bytesToSend)
                 {
                     do
                     {
-                        m_nBytesSent = SENDTO(m_socket, pBuf, bytesToSend, 0, (const sockaddr *)&m_stServerSockaddr, sizeof(m_stServerSockaddr));
+                        m_nBytesSent = SENDTO(m_socket, pBuf, bytesToSend, 0,
+                                              (const sockaddr *)&m_stServerSockaddr,
+                                              sizeof(m_stServerSockaddr));
                         TranslateSocketError();
                     } while (GetSocketError() == CSimpleSocket::SocketInterrupted);
                 }
@@ -503,6 +783,12 @@ bool CSimpleSocket::Shutdown(CShutdownMode nShutdown)
     TranslateSocketError();
 
     return (nRetVal == CSimpleSocket::SocketSuccess) ? true: false;
+}
+
+
+bool CSimpleSocket::Select(void)
+{
+    return Select(0,0);
 }
 
 
@@ -937,6 +1223,12 @@ int32 CSimpleSocket::SendFile(int32 nOutFd, int32 nInFd, off_t *pOffset, int32 n
     TranslateSocketError();
 
     return nOutCount;
+}
+
+
+bool CSimpleSocket::IsSocketValid(void)
+{
+    return (m_socket != SocketError);
 }
 
 

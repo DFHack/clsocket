@@ -93,6 +93,24 @@
 
 #define SOCKET_SENDFILE_BLOCKSIZE 8192
 
+
+#ifndef __cplusplus
+  #error C++ compiler required!
+#else
+  #if ( __cplusplus >= 201103L )
+    #define CLSOCKET_OVERRIDE   override
+  #elif ( 0 && defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ > 7 || \
+        (__GNUC_MINOR__ == 7 && __GNUC_PATCHLEVEL__ > 1)) )
+    #define CLSOCKET_OVERRIDE   override
+  #elif ( defined(_MSC_VER) && ( _MSC_VER >= 1400) )
+    #define CLSOCKET_OVERRIDE   override
+  #else
+    #define CLSOCKET_OVERRIDE
+  #endif
+#endif
+
+
+
 /// Provides a platform independent class to for socket development.
 /// This class is designed to abstract socket communication development in a
 /// platform independent manner.
@@ -100,6 +118,7 @@
 ///  -# CActiveSocket Class
 ///  -# CPassiveSocket Class
 class EXPORT CSimpleSocket {
+    friend class CPassiveSocket;
 public:
     /// Defines the three possible states for shuting down a socket.
     typedef enum
@@ -148,20 +167,23 @@ public:
     CSimpleSocket(CSocketType type = SocketTypeTcp);
     CSimpleSocket(CSimpleSocket &socket);
 
-    virtual ~CSimpleSocket()
-    {
-        if (m_pBuffer != NULL)
-        {
-            delete [] m_pBuffer;
-            m_pBuffer = NULL;
-        }
-    };
+    virtual ~CSimpleSocket();
 
     /// Initialize instance of CSocket.  This method MUST be called before an
     /// object can be used. Errors : CSocket::SocketProtocolError,
     /// CSocket::SocketInvalidSocket,
     /// @return true if properly initialized.
     virtual bool Initialize(void);
+
+    /// Established a connection to the address specified by pAddr.
+    /// Connection-based protocol sockets (CSocket::SocketTypeTcp) may
+    /// successfully call Open() only once, however; connectionless protocol
+    /// sockets (CSocket::SocketTypeUdp) may use Open() multiple times to
+    /// change their association.
+    ///  @param pAddr specifies the destination address to connect.
+    ///  @param nPort specifies the destination port.
+    ///  @return true if successful connection made, otherwise false.
+    virtual bool Open(const char *pAddr, uint16 nPort);
 
     /// Close socket
     /// @return true if successfully closed otherwise returns false.
@@ -181,9 +203,7 @@ public:
     /// for writing, or have an exceptional condition pending, respectively.
     /// Block until an event happens on the specified file descriptors.
     /// @return true if socket has data ready, or false if not ready or timed out.
-    virtual bool Select(void) {
-        return Select(0,0);
-    };
+    virtual bool Select(void);
 
     /// Examine the socket descriptor sets currently owned by the instance of
     /// the socket class (the readfds, writefds, and errorfds parameters) to
@@ -197,9 +217,7 @@ public:
     /// Does the current instance of the socket object contain a valid socket
     /// descriptor.
     ///  @return true if the socket object contains a valid socket descriptor.
-    virtual bool IsSocketValid(void) {
-        return (m_socket != SocketError);
-    };
+    virtual bool IsSocketValid(void);
 
     /// Provides a standard error code for cross platform development by
     /// mapping the operating system error to an error defined by the CSocket
@@ -549,6 +567,18 @@ private:
     bool Flush();
 
     CSimpleSocket *operator=(CSimpleSocket &socket);
+
+    /// Utility function used to create a TCP connection, called from Open().
+    ///  @return true if successful connection made, otherwise false.
+    bool ConnectTCP(const char *pAddr, uint16 nPort);
+
+    /// Utility function used to create a UDP connection, called from Open().
+    ///  @return true if successful connection made, otherwise false.
+    bool ConnectUDP(const char *pAddr, uint16 nPort);
+
+    /// Utility function used to create a RAW connection, called from Open().
+    ///  @return true if successful connection made, otherwise false.
+    bool ConnectRAW(const char *pAddr, uint16 nPort);
 
 protected:
     SOCKET               m_socket;            /// socket handle
