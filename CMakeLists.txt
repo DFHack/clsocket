@@ -104,6 +104,19 @@ if(UNIX OR (WIN32 AND MINGW))
 
         ADD_EXECUTABLE(echoserver-example examples/EchoServer.cpp)
         TARGET_LINK_LIBRARIES(echoserver-example clsocket)
+
+        ADD_EXECUTABLE(delayedechoserver-example examples/DelayedEchoServer.cpp)
+        TARGET_LINK_LIBRARIES(delayedechoserver-example clsocket)
+
+        ADD_EXECUTABLE(txtoserver-example examples/TxToServer.cpp)
+        TARGET_LINK_LIBRARIES(txtoserver-example clsocket)
+
+        ADD_EXECUTABLE(udpserver-example examples/UdpServer.cpp)
+        TARGET_LINK_LIBRARIES(udpserver-example clsocket)
+
+        ADD_EXECUTABLE(txtoudpserver-example examples/TxToUdpServer.cpp)
+        TARGET_LINK_LIBRARIES(txtoudpserver-example clsocket)
+
     endif()
 endif()
 

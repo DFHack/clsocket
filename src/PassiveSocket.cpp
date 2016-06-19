@@ -99,9 +99,9 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
         m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr(pGroup);
         m_stMulticastRequest.imr_interface.s_addr = m_stMulticastGroup.sin_addr.s_addr;
 
-        if (SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                       (void *)&m_stMulticastRequest,
-                       sizeof(m_stMulticastRequest)) == CSimpleSocket::SocketSuccess)
+        if (!pGroup || SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                                  (void *)&m_stMulticastRequest,
+                                  sizeof(m_stMulticastRequest)) == CSimpleSocket::SocketSuccess)
         {
             bRetVal = true;
         }

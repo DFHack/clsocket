@@ -353,8 +353,21 @@ bool CSimpleSocket::Initialize()
     //-------------------------------------------------------------------------
     // Data structure containing general Windows Sockets Info
     //-------------------------------------------------------------------------
+    // use WinSock 2.2
+    // see https://msdn.microsoft.com/en-us/library/windows/desktop/ms742213(v=vs.85).aspx
+    // Windows Sockets version 2.2 is supported on
+    //   Windows Server 2008,
+    //   Windows Vista,
+    //   Windows Server 2003,
+    //   Windows XP,
+    //   Windows 2000,
+    //   Windows NT 4.0 with Service Pack 4 (SP4) and later,
+    //   Windows Me,
+    //   Windows 98,
+    //   Windows 95 OSR2,
+    //   Windows 95 with the Windows Socket 2 Update
     memset(&m_hWSAData, 0, sizeof(m_hWSAData));
-    WSAStartup(MAKEWORD(2, 0), &m_hWSAData);
+    WSAStartup(MAKEWORD(2, 2), &m_hWSAData);
 #endif
 
     //-------------------------------------------------------------------------
@@ -592,7 +605,9 @@ uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
     //-------------------------------------------------------------------------
     if (m_socket != CSimpleSocket::SocketError)
     {
-        SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
+        nRetVal = SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
+        if ( !nRetVal )
+            return GetWindowSize(nOptionName);
         TranslateSocketError();
     }
     else
@@ -897,16 +912,29 @@ bool CSimpleSocket::SetReceiveTimeout(int32 nRecvTimeoutSec, int32 nRecvTimeoutU
 {
     bool bRetVal = true;
 
-    memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
+#ifdef WIN32
+    uint32 nMillis = nRecvTimeoutSec * 1000 + nRecvTimeoutUsec / 1000;
+    if ( nMillis == 0 && ( nRecvTimeoutUsec > 0 || nRecvTimeoutSec > 0 ) )
+        nMillis = 1;
+    nRecvTimeoutSec = nMillis / 1000;
+    nRecvTimeoutUsec = nMillis % 1000;
+#endif
 
+    memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
     m_stRecvTimeout.tv_sec = nRecvTimeoutSec;
     m_stRecvTimeout.tv_usec = nRecvTimeoutUsec;
 
     //--------------------------------------------------------------------------
     // Sanity check to make sure the options are supported!
     //--------------------------------------------------------------------------
+#ifdef WIN32
+    // see https://msdn.microsoft.com/en-us/library/windows/desktop/ms740476(v=vs.85).aspx
+    if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_RCVTIMEO, &nMillis,
+                   sizeof(nMillis)) == CSimpleSocket::SocketError)
+#else
     if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_RCVTIMEO, &m_stRecvTimeout,
                    sizeof(struct timeval)) == CSimpleSocket::SocketError)
+#endif
     {
         bRetVal = false;
         TranslateSocketError();
@@ -925,6 +953,14 @@ bool CSimpleSocket::SetSendTimeout(int32 nSendTimeoutSec, int32 nSendTimeoutUsec
 {
     bool bRetVal = true;
 
+#ifdef WIN32
+    uint32 nMillis = nSendTimeoutSec * 1000 + nSendTimeoutUsec / 1000;
+    if ( nMillis == 0 && ( nSendTimeoutUsec > 0 || nSendTimeoutSec > 0 ) )
+        nMillis = 1;
+    nSendTimeoutSec = nMillis / 1000;
+    nSendTimeoutUsec = nMillis % 1000;
+#endif
+
     memset(&m_stSendTimeout, 0, sizeof(struct timeval));
     m_stSendTimeout.tv_sec = nSendTimeoutSec;
     m_stSendTimeout.tv_usec = nSendTimeoutUsec;
@@ -932,8 +968,14 @@ bool CSimpleSocket::SetSendTimeout(int32 nSendTimeoutSec, int32 nSendTimeoutUsec
     //--------------------------------------------------------------------------
     // Sanity check to make sure the options are supported!
     //--------------------------------------------------------------------------
+#ifdef WIN32
+    // see https://msdn.microsoft.com/en-us/library/windows/desktop/ms740476(v=vs.85).aspx
+    if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_SNDTIMEO, &nMillis,
+                   sizeof(nMillis)) == CSimpleSocket::SocketError)
+#else
     if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_SNDTIMEO, &m_stSendTimeout,
                    sizeof(struct timeval)) == CSimpleSocket::SocketError)
+#endif
     {
         bRetVal = false;
         TranslateSocketError();
@@ -969,12 +1011,12 @@ bool CSimpleSocket::SetOptionReuseAddr()
 // SetOptionLinger()
 //
 //------------------------------------------------------------------------------
-bool CSimpleSocket::SetOptionLinger(bool bEnable, uint16 nTime)
+bool CSimpleSocket::SetOptionLinger(bool bEnable, uint16 nTimeInSeconds)
 {
     bool bRetVal = false;
 
     m_stLinger.l_onoff = (bEnable == true) ? 1: 0;
-    m_stLinger.l_linger = nTime;
+    m_stLinger.l_linger = nTimeInSeconds;
 
     if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_LINGER, &m_stLinger, sizeof(m_stLinger)) == 0)
     {
@@ -1301,8 +1343,7 @@ void CSimpleSocket::TranslateSocketError(void)
         SetSocketError(CSimpleSocket::SocketEunknown);
         break;
     }
-#endif
-#ifdef WIN32
+#elif defined(WIN32)
     int32 nError = WSAGetLastError();
     switch (nError)
     {
@@ -1358,6 +1399,8 @@ void CSimpleSocket::TranslateSocketError(void)
         SetSocketError(CSimpleSocket::SocketEunknown);
         break;
     }
+#else
+#error unsupported platform!
 #endif
 }
 
@@ -1418,7 +1461,7 @@ const char *CSimpleSocket::DescribeError(CSocketError err)
 // Select()
 //
 //------------------------------------------------------------------------------
-bool CSimpleSocket::Select(int32 nTimeoutSec, int32 nTimeoutUSec)
+bool CSimpleSocket::Select(int32 nTimeoutSec, int32 nTimeoutUSec, bool bAwakeWhenReadable, bool bAwakeWhenWritable)
 {
     bool            bRetVal = false;
     struct timeval *pTimeout = NULL;
@@ -1429,9 +1472,13 @@ bool CSimpleSocket::Select(int32 nTimeoutSec, int32 nTimeoutUSec)
     FD_ZERO(&m_errorFds);
     FD_ZERO(&m_readFds);
     FD_ZERO(&m_writeFds);
+
+    if ( bAwakeWhenReadable )
+        FD_SET(m_socket, &m_readFds);
+    if ( bAwakeWhenWritable )
+        FD_SET(m_socket, &m_writeFds);
+
     FD_SET(m_socket, &m_errorFds);
-    FD_SET(m_socket, &m_readFds);
-    FD_SET(m_socket, &m_writeFds);
 
     //---------------------------------------------------------------------
     // If timeout has been specified then set value, otherwise set timeout
@@ -1446,7 +1493,6 @@ bool CSimpleSocket::Select(int32 nTimeoutSec, int32 nTimeoutUSec)
     }
 
     nNumDescriptors = SELECT(m_socket+1, &m_readFds, &m_writeFds, &m_errorFds, pTimeout);
-//    nNumDescriptors = SELECT(m_socket+1, &m_readFds, NULL, NULL, pTimeout);
 
     //----------------------------------------------------------------------
     // Handle timeout

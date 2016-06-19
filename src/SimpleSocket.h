@@ -185,6 +185,10 @@ public:
     ///  @return true if successful connection made, otherwise false.
     virtual bool Open(const char *pAddr, uint16 nPort);
 
+    inline bool ConnectTo( const char * pAddr, uint16 nPort ) {
+        return Open(pAddr, nPort);
+    };
+
     /// Close socket
     /// @return true if successfully closed otherwise returns false.
     virtual bool Close(void);
@@ -192,10 +196,19 @@ public:
     /// Shutdown shut down socket send and receive operations
     ///    CShutdownMode::Receives - Disables further receive operations.
     ///    CShutdownMode::Sends    - Disables further send operations.
-    ///    CShutdownBoth::         - Disables further send and receive operations.
+    ///    CShutdownMode::Both     - Disables further send and receive operations.
+    /// see http://stackoverflow.com/questions/4160347/close-vs-shutdown-socket
     /// @param nShutdown specifies the type of shutdown.
     /// @return true if successfully shutdown otherwise returns false.
     virtual bool Shutdown(CShutdownMode nShutdown);
+
+    inline bool CloseForReads() {
+        return Shutdown( CSimpleSocket::Receives );
+    };
+
+    inline bool CloseForWrites() {
+        return Shutdown( CSimpleSocket::Sends );
+    };
 
     /// Examine the socket descriptor sets currently owned by the instance of
     /// the socket class (the readfds, writefds, and errorfds parameters) to
@@ -212,7 +225,16 @@ public:
     /// @param nTimeoutSec timeout in seconds for select.
     /// @param nTimeoutUSec timeout in micro seconds for select.
     /// @return true if socket has data ready, or false if not ready or timed out.
-    virtual bool Select(int32 nTimeoutSec, int32 nTimeoutUSec);
+    virtual bool Select(int32 nTimeoutSec, int32 nTimeoutUSec,
+                        bool bAwakeWhenReadable = true, bool bAwakeWhenWritable = true );
+
+    inline bool WaitUntilReadable( int32 nTimeoutMillis ) {
+        return Select( nTimeoutMillis / 1000 , 1000 * (nTimeoutMillis % 1000), true, false );
+    }
+
+    inline bool WaitUntilWritable( int32 nTimeoutMillis ) {
+        return Select( nTimeoutMillis / 1000 , 1000 * (nTimeoutMillis % 1000), false, true );
+    }
 
     /// Does the current instance of the socket object contain a valid socket
     /// descriptor.
@@ -231,6 +253,14 @@ public:
         return DescribeError(m_socketErrno);
     };
 
+    static inline const char * GetSocketErrorText(CSocketError err) {
+        return DescribeError(err);
+    }
+
+    inline const char * GetSocketErrorText() {
+        return DescribeError(m_socketErrno);
+    }
+
     /// Attempts to receive a block of data on an established connection.
     /// @param nMaxBytes maximum number of bytes to receive.
     /// @param pBuffer, memory where to receive the data,
@@ -241,6 +271,10 @@ public:
     /// @return of -1 means that an error has occurred.
     virtual int32 Receive(int32 nMaxBytes = 1, uint8 * pBuffer = 0);
 
+    inline int32 Receive(int32 nMaxBytes, char * pBuffer) {
+        return Receive(nMaxBytes, (uint8*)pBuffer);
+    };
+
     /// Attempts to send a block of data on an established connection.
     /// @param pBuf block of data to be sent.
     /// @param bytesToSend size of data block to be sent.
@@ -248,6 +282,18 @@ public:
     /// @return of zero means the connection has been shutdown on the other side.
     /// @return of -1 means that an error has occurred.
     virtual int32 Send(const uint8 *pBuf, size_t bytesToSend);
+
+    inline int32 Send(const char *pBuf, size_t bytesToSend) {
+        return Send( (const uint8 *)pBuf, bytesToSend );
+    };
+
+    inline int32 Transmit(const uint8 *pBuf, size_t bytesToSend) {
+        return Send( pBuf, bytesToSend );
+    };
+
+    inline int32 Transmit(const char *pBuf, size_t bytesToSend) {
+        return Send( (const uint8 *)pBuf, bytesToSend );
+    };
 
     /// Attempts to send at most nNumItem blocks described by sendVector
     /// to the socket descriptor associated with the socket object.
@@ -322,9 +368,9 @@ public:
     ///  Closed by the remote system).
     /// <br><p>
     /// @param bEnable true to enable option false to disable option.
-    /// @param nTime time in seconds to linger.
+    /// @param nTimeInSeconds time in seconds to linger.
     /// @return true if option successfully set
-    bool SetOptionLinger(bool bEnable, uint16 nTime);
+    bool SetOptionLinger(bool bEnable, uint16 nTimeInSeconds);
 
     /// Tells the kernel that even if this port is busy (in the TIME_WAIT state),
     /// go ahead and reuse it anyway.  If it is busy, but with another state,
@@ -362,6 +408,10 @@ public:
         m_stConnectTimeout.tv_usec = nConnectTimeoutUsec;
     };
 
+    inline bool SetConnectTimeoutMillis(int32 nConnectTimeoutMillis) {
+        return SetReceiveTimeout( nConnectTimeoutMillis / 1000 , 1000 * (nConnectTimeoutMillis % 1000) );
+    };
+
     /// Gets the timeout value that specifies the maximum number of seconds a
     /// a call to CSimpleSocket::Receive waits until it completes.
     /// @return the length of time in seconds
@@ -387,6 +437,10 @@ public:
     ///  @param nRecvTimeoutUsec of timeout in microseconds.
     ///  @return true if socket timeout was successfully set.
     bool SetReceiveTimeout(int32 nRecvTimeoutSec, int32 nRecvTimeoutUsec = 0);
+
+    inline bool SetReceiveTimeoutMillis(int32 nRecvTimeoutMillis) {
+        return SetReceiveTimeout( nRecvTimeoutMillis / 1000 , 1000 * (nRecvTimeoutMillis % 1000) );
+    };
 
     /// Enable/disable multicast for a socket.  This options is only valid for
     /// socket descriptors of type CSimpleSocket::SocketTypeUdp.
@@ -423,6 +477,10 @@ public:
     /// to CSimpleSocket::Send waits until it completes.
     /// @return the length of time in seconds
     bool SetSendTimeout(int32 nSendTimeoutSec, int32 nSendTimeoutUsec = 0);
+
+    inline bool SetSendTimeoutMillis(int32 nSendTimeoutMillis) {
+        return SetSendTimeout( nSendTimeoutMillis / 1000 , 1000 * (nSendTimeoutMillis % 1000) );
+    };
 
     /// Returns the last error that occured for the instace of the CSimpleSocket
     /// instance.  This method should be called immediately to retrieve the

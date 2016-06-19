@@ -77,10 +77,25 @@ public:
     ///  @param nPort - port on which multicast
     ///  @return true if able to bind to interface and multicast group.
     ///      If not successful, the false is returned and one of the following error
-    ///      condiitions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
+    ///      conditions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
     ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
     ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
     bool BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort);
+
+    /// Bind to a specified interface and port
+    ///
+    ///  @param pInterface - interface on which to bind.
+    ///  @param nPort - port on which multicast
+    ///  @return true if able to bind to interface.
+    ///      If not successful, the false is returned and one of the following error
+    ///      conditions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
+    ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
+    ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
+    inline bool Bind(const char *pInterface, uint16 nPort)
+    {
+        const char *pNoGroup = 0;
+        return BindMulticast(pInterface, pNoGroup, nPort);
+    }
 
     /// Create a listening socket at local ip address 'x.x.x.x' or 'localhost'
     /// if pAddr is NULL on port nPort.

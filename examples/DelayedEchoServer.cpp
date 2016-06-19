@@ -3,10 +3,22 @@
 
 #define MAX_PACKET 4096
 
+
+#ifdef WIN32
+#include <windows.h>
+
+  static void sleep( unsigned int seconds )
+  {
+    Sleep( seconds * 1000 );
+  }
+#elif defined(_LINUX) || defined (_DARWIN)
+  #include <unistd.h>
+#endif
+
 int main(int argc, char **argv)
 {
     CPassiveSocket socket;
-    CActiveSocket *pClient = NULL;
+    CSimpleSocket *pClient = NULL;
 
     //--------------------------------------------------------------------------
     // Initialize our socket object 
@@ -28,11 +40,13 @@ int main(int argc, char **argv)
                 //------------------------------------------------------------------
                 int32 rx = pClient->GetBytesReceived();
                 uint8 *txt = pClient->GetData();
-                pClient->Send( txt, rx );
-                fprintf(stderr, "received and sent %d bytes:\n", rx );
+                fprintf(stderr, "received %d bytes:\n", rx );
                 for ( int k = 0; k < rx; ++k )
                     fprintf(stderr, "%c", txt[k]);
                 fprintf(stderr, "\n");
+                sleep(5);
+                pClient->Send( txt, rx );
+                fprintf(stderr, "sent back after 5 seconds\n" );
                 pClient->Close();
             }
 
