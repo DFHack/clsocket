@@ -325,6 +325,10 @@ int32 CPassiveSocket::Send(const uint8 *pBuf, size_t bytesToSend)
     case CSimpleSocket::SocketTypeTcp:
         CSimpleSocket::Send(pBuf, bytesToSend);
         break;
+    case CSimpleSocket::SocketTypeInvalid:
+    case CSimpleSocket::SocketTypeTcp6:
+    case CSimpleSocket::SocketTypeUdp6:
+    case CSimpleSocket::SocketTypeRaw:
     default:
         SetSocketError(SocketProtocolError);
         break;

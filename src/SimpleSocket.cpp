@@ -101,6 +101,7 @@ CSimpleSocket::CSimpleSocket(CSocketType nType) :
 #endif
         break;
     }
+    case CSimpleSocket::SocketTypeInvalid:
     default:
         m_nSocketType = CSimpleSocket::SocketTypeInvalid;
         break;
@@ -425,6 +426,9 @@ bool CSimpleSocket::Open(const char *pAddr, uint16 nPort)
     }
     case CSimpleSocket::SocketTypeRaw :
         break;
+    case CSimpleSocket::SocketTypeInvalid:
+    case CSimpleSocket::SocketTypeTcp6:
+    case CSimpleSocket::SocketTypeUdp6:
     default:
         break;
     }
@@ -741,6 +745,10 @@ int32 CSimpleSocket::Send(const uint8 *pBuf, size_t bytesToSend)
         }
         break;
     }
+    case CSimpleSocket::SocketTypeInvalid:
+    case CSimpleSocket::SocketTypeTcp6:
+    case CSimpleSocket::SocketTypeUdp6:
+    case CSimpleSocket::SocketTypeRaw:
     default:
         break;
     }
@@ -1124,6 +1132,10 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes, uint8 * pBuffer )
 
         break;
     }
+    case CSimpleSocket::SocketTypeInvalid:
+    case CSimpleSocket::SocketTypeTcp6:
+    case CSimpleSocket::SocketTypeUdp6:
+    case CSimpleSocket::SocketTypeRaw:
     default:
         break;
     }
