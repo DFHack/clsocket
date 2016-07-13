@@ -27,6 +27,12 @@ int main(int argc, char **argv)
         return 10;
     }
 
+    fprintf(stderr, "\n%s. Local: %s:%u   Peer: %s:%u\n"
+          , ( socket.IsServerSide() ? "Local is Server" : "Local is Client" )
+          , socket.GetLocalAddr(), (unsigned)socket.GetLocalPort()
+          , socket.GetPeerAddr(), (unsigned)socket.GetPeerPort()
+          );
+
     uint32 nSendBufSize = socket.GetSendWindowSize();
     fprintf(stderr, "default Send Buffer Size %u\n", nSendBufSize );
     nSendBufSize = socket.SetSendWindowSize( 80000 );
@@ -40,7 +46,7 @@ int main(int argc, char **argv)
 
     int32 rxSize = 0;
     char rxBuffer[16];
-    while (rxSize < sendSize)
+    while (rxSize < (int32)sendSize)
     {
         if ( !socket.WaitUntilReadable(500) )
         {
@@ -48,7 +54,11 @@ int main(int argc, char **argv)
             continue;
         }
 
+        int32 peekRx = socket.GetNumReceivableBytes();
         int32 rx = socket.Receive( 15, rxBuffer );
+        if ( peekRx != rx && !( peekRx == 0 && rx < 0 ) )
+            fprintf( stderr, "GetNumReceivableBytes() = %d != %d = Receive() !\n", peekRx, rx );
+
         if ( rx > 0 )
         {
             rxBuffer[rx] = '\0';

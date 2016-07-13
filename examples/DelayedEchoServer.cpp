@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     // Initialize our socket object 
     //--------------------------------------------------------------------------
     socket.Initialize();
-    socket.Listen("127.0.0.1", 6789);
+    socket.Listen( 0, 6789 ); // NULL (not "127.0.0.1") to allow testing with remotes
 
     while (true)
     {

@@ -27,6 +27,12 @@ int main(int argc, char **argv)
         return 10;
     }
 
+    fprintf(stderr, "\n%s. Local: %s:%u   Peer: %s:%u\n"
+          , ( socket.IsServerSide() ? "Local is Server" : "Local is Client" )
+          , socket.GetLocalAddr(), (unsigned)socket.GetLocalPort()
+          , socket.GetPeerAddr(), (unsigned)socket.GetPeerPort()
+          );
+
     size_t sendSize = strlen( argv[2] );
     socket.Send( argv[2], (int32)sendSize );
 

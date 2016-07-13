@@ -42,13 +42,19 @@
  *----------------------------------------------------------------------------*/
 #include "SimpleSocket.h"
 
+#if defined(_LINUX) || defined(_DARWIN)
+#include <sys/ioctl.h>
+#endif
+
+
 CSimpleSocket::CSimpleSocket(CSocketType nType) :
     m_socket(INVALID_SOCKET),
     m_socketErrno(CSimpleSocket::SocketInvalidSocket),
     m_pBuffer(NULL), m_nBufferSize(0), m_nSocketDomain(AF_INET),
     m_nSocketType(SocketTypeInvalid), m_nBytesReceived(-1),
     m_nBytesSent(-1), m_nFlags(0),
-    m_bIsBlocking(true)
+    m_bIsBlocking(true),
+    m_bIsServerSide(false)
 {
     SetConnectTimeout(1, 0);
     memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
@@ -150,8 +156,11 @@ bool CSimpleSocket::ConnectTCP(const char *pAddr, uint16 nPort)
     bool           bRetVal = false;
     struct in_addr stIpAddress;
 
+    // this is the Client
+    m_bIsServerSide = false;
+
     //------------------------------------------------------------------
-    // Preconnection setup that must be preformed
+    // Preconnection setup that must be performed
     //------------------------------------------------------------------
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
     m_stServerSockaddr.sin_family = AF_INET;
@@ -231,8 +240,11 @@ bool CSimpleSocket::ConnectUDP(const char *pAddr, uint16 nPort)
     bool           bRetVal = false;
     struct in_addr stIpAddress;
 
+    // this is the Client
+    m_bIsServerSide = false;
+
     //------------------------------------------------------------------
-    // Pre-connection setup that must be preformed
+    // Pre-connection setup that must be performed
     //------------------------------------------------------------------
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
     m_stServerSockaddr.sin_family = AF_INET;
@@ -290,8 +302,12 @@ bool CSimpleSocket::ConnectRAW(const char *pAddr, uint16 nPort)
 {
     bool           bRetVal = false;
     struct in_addr stIpAddress;
+
+    // this is the Client
+    m_bIsServerSide = false;
+
     //------------------------------------------------------------------
-    // Pre-connection setup that must be preformed
+    // Pre-connection setup that must be performed
     //------------------------------------------------------------------
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
     m_stServerSockaddr.sin_family = AF_INET;
@@ -393,6 +409,7 @@ bool CSimpleSocket::Initialize()
 bool CSimpleSocket::Open(const char *pAddr, uint16 nPort)
 {
     bool bRetVal = false;
+    m_bIsServerSide = false;
 
     if (IsSocketValid() == false)
     {
@@ -566,6 +583,71 @@ int32 CSimpleSocket::GetSocketDscp(void)
 }
 
 
+/// Returns clients Internet host address as a string in standard numbers-and-dots notation.
+///  @return NULL if invalid
+const char * CSimpleSocket::GetClientAddr() const
+{
+    return inet_ntoa(m_stClientSockaddr.sin_addr);
+}
+
+/// Returns the port number on which the client is connected.
+///  @return client port number.
+uint16 CSimpleSocket::GetClientPort() const
+{
+    return m_stClientSockaddr.sin_port;
+}
+
+/// Returns server Internet host address as a string in standard numbers-and-dots notation.
+///  @return NULL if invalid
+const char * CSimpleSocket::GetServerAddr() const
+{
+    return inet_ntoa(m_stServerSockaddr.sin_addr);
+}
+
+/// Returns the port number on which the server is connected.
+///  @return server port number.
+uint16 CSimpleSocket::GetServerPort() const
+{
+    return ntohs(m_stServerSockaddr.sin_port);
+}
+
+
+/// Returns if this is the Server side of the connection
+bool CSimpleSocket::IsServerSide() const
+{
+  return m_bIsServerSide;
+}
+
+/// Returns local Internet host address as a string in standard numbers-and-dots notation.
+///  @return NULL if invalid
+const char * CSimpleSocket::GetLocalAddr() const
+{
+  return (m_bIsServerSide) ? GetServerAddr() : GetClientAddr();
+}
+
+/// Returns the port number on which the local socket is connected.
+///  @return client port number.
+uint16 CSimpleSocket::GetLocalPort() const
+{
+  return (m_bIsServerSide) ? GetServerPort() : GetClientPort();
+}
+
+
+/// Returns Peer's Internet host address as a string in standard numbers-and-dots notation.
+///  @return NULL if invalid
+const char * CSimpleSocket::GetPeerAddr() const
+{
+  return (m_bIsServerSide) ? GetClientAddr() : GetServerAddr();
+}
+
+/// Returns the port number on which the peer is connected.
+///  @return client port number.
+uint16 CSimpleSocket::GetPeerPort() const
+{
+  return (m_bIsServerSide) ? GetClientPort() : GetServerPort();
+}
+
+
 //------------------------------------------------------------------------------
 //
 // GetWindowSize()
@@ -609,7 +691,7 @@ uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
     //-------------------------------------------------------------------------
     if (m_socket != CSimpleSocket::SocketError)
     {
-        nRetVal = SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
+        int nRetVal = SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
         if ( !nRetVal )
             return GetWindowSize(nOptionName);
         TranslateSocketError();
@@ -668,6 +750,15 @@ bool CSimpleSocket::EnableNagleAlgoritm()
     TranslateSocketError();
 
     return bRetVal;
+}
+
+
+/// Set object socket handle to that specified as parameter
+///  @param socket value of socket descriptor
+void CSimpleSocket::SetSocketHandle(SOCKET socket, bool bIsServerSide )
+{
+    m_socket = socket;
+    m_bIsServerSide = bIsServerSide;
 }
 
 
@@ -1161,6 +1252,36 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes, uint8 * pBuffer )
     return m_nBytesReceived;
 }
 
+
+/// Attempts to return the number of Bytes waiting at next Receive()
+/// @return number of bytes ready for Receive()
+/// @return of -1 means that an error has occurred.
+int32 CSimpleSocket::GetNumReceivableBytes()
+{
+    //--------------------------------------------------------------------------
+    // If the socket is invalid then return false.
+    //--------------------------------------------------------------------------
+    if (IsSocketValid() == false)
+    {
+        return -1;
+    }
+
+#if WIN32
+    u_long numBytesInSocket = 0;
+    if ( ::ioctlsocket(m_socket, FIONREAD, &numBytesInSocket) < 0 )
+        return -1;
+
+    return (int32)numBytesInSocket;
+#elif defined(_LINUX) || defined(_DARWIN)
+    int32 numBytesInSocket = 0;
+    if ( ioctl(m_socket, FIONREAD, (char*)&numBytesInSocket) < 0 )
+        return -1;
+
+    return numBytesInSocket;
+#else
+#error missing implementation for GetNumReceivableBytes()
+#endif
+}
 
 //------------------------------------------------------------------------------
 //

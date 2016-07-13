@@ -275,6 +275,13 @@ public:
         return Receive(nMaxBytes, (uint8*)pBuffer);
     };
 
+
+    /// Attempts to return the number of Bytes waiting at next Receive()
+    /// @return number of bytes ready for Receive()
+    /// @return of -1 means that an error has occurred.
+    virtual int32 GetNumReceivableBytes();
+
+
     /// Attempts to send a block of data on an established connection.
     /// @param pBuf block of data to be sent.
     /// @param bytesToSend size of data block to be sent.
@@ -527,27 +534,40 @@ public:
 
     /// Returns clients Internet host address as a string in standard numbers-and-dots notation.
     ///  @return NULL if invalid
-    const char *GetClientAddr() {
-        return inet_ntoa(m_stClientSockaddr.sin_addr);
-    };
+    const char * GetClientAddr() const;
 
     /// Returns the port number on which the client is connected.
     ///  @return client port number.
-    uint16 GetClientPort() {
-        return m_stClientSockaddr.sin_port;
-    };
+    uint16 GetClientPort() const;
 
     /// Returns server Internet host address as a string in standard numbers-and-dots notation.
     ///  @return NULL if invalid
-    const char *GetServerAddr() {
-        return inet_ntoa(m_stServerSockaddr.sin_addr);
-    };
+    const char * GetServerAddr() const;
 
     /// Returns the port number on which the server is connected.
     ///  @return server port number.
-    uint16 GetServerPort() {
-        return ntohs(m_stServerSockaddr.sin_port);
-    };
+    uint16 GetServerPort() const;
+
+    /// Returns if this is the Server side of the connection
+    bool IsServerSide() const;
+
+    /// Returns local Internet host address as a string in standard numbers-and-dots notation.
+    ///  @return NULL if invalid
+    const char * GetLocalAddr() const;
+
+    /// Returns the port number on which the local socket is connected.
+    ///  @return client port number.
+    uint16 GetLocalPort() const;
+
+
+    /// Returns Peer's Internet host address as a string in standard numbers-and-dots notation.
+    ///  @return NULL if invalid
+    const char * GetPeerAddr() const;
+
+    /// Returns the port number on which the peer is connected.
+    ///  @return client port number.
+    uint16 GetPeerPort() const;
+
 
     /// Get the TCP receive buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the receive buffer to twice the value passed.
@@ -595,9 +615,7 @@ protected:
 
     /// Set object socket handle to that specified as parameter
     ///  @param socket value of socket descriptor
-    void SetSocketHandle(SOCKET socket) {
-        m_socket = socket;
-    };
+    void SetSocketHandle(SOCKET socket, bool bIsServerSide = true );
 
 private:
     /// Generic function used to get the send/receive window size
@@ -650,6 +668,9 @@ protected:
     uint32               m_nFlags;            /// socket flags
     bool                 m_bIsBlocking;       /// is socket blocking
     bool                 m_bIsMulticast;      /// is the UDP socket multicast;
+    bool                 m_bIsServerSide;     /// is this the server? => m_stServerSockaddr == localAddr()
+                                              ///    and m_stClientSockaddr == peerAddr()
+                                              /// else: m_stClientSockaddr == localAddr()
     struct timeval       m_stConnectTimeout;  /// connection timeout
     struct timeval       m_stRecvTimeout;     /// receive timeout
     struct timeval       m_stSendTimeout;     /// send timeout

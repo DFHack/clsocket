@@ -46,6 +46,8 @@
 
 CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 {
+  // PassiveSocket is intended for "Server" purpose
+  m_bIsServerSide = true;
 }
 
 CPassiveSocket::~CPassiveSocket()
@@ -88,22 +90,34 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
         }
     }
 
+    // multicast address/port is the server
+    memcpy(&m_stServerSockaddr,&m_stMulticastGroup,sizeof(m_stServerSockaddr));
+
     //--------------------------------------------------------------------------
     // Bind to the specified port
     //--------------------------------------------------------------------------
+    m_bIsServerSide = true;
     if (bind(m_socket, (struct sockaddr *)&m_stMulticastGroup, sizeof(m_stMulticastGroup)) == 0)
     {
-        //----------------------------------------------------------------------
-        // Join the multicast group
-        //----------------------------------------------------------------------
-        m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr(pGroup);
-        m_stMulticastRequest.imr_interface.s_addr = m_stMulticastGroup.sin_addr.s_addr;
-
-        if (!pGroup || SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                                  (void *)&m_stMulticastRequest,
-                                  sizeof(m_stMulticastRequest)) == CSimpleSocket::SocketSuccess)
+        if ( pGroup )
         {
-            bRetVal = true;
+            //----------------------------------------------------------------------
+            // Join the multicast group
+            //----------------------------------------------------------------------
+            m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr(pGroup);
+            m_stMulticastRequest.imr_interface.s_addr = m_stMulticastGroup.sin_addr.s_addr;
+
+            if ( SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                                      (void *)&m_stMulticastRequest,
+                                      sizeof(m_stMulticastRequest)) == CSimpleSocket::SocketSuccess)
+            {
+                bRetVal = true;
+            }
+        }
+        else
+        {
+          // all OK, if we shall not join to a group
+          bRetVal = true;
         }
 
         m_timer.SetEndTime();
@@ -179,6 +193,7 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
     //--------------------------------------------------------------------------
     // Bind to the specified port
     //--------------------------------------------------------------------------
+    m_bIsServerSide = true;
     if (bind(m_socket, (struct sockaddr *)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
     {
         if (m_nSocketType == CSimpleSocket::SocketTypeTcp)
