@@ -241,6 +241,23 @@ public:
     ///  @return true if the socket object contains a valid socket descriptor.
     virtual bool IsSocketValid(void);
 
+
+    inline bool IsSocketInvalid(void) {
+        return !IsSocketValid();
+    };
+
+
+    /// Is the current instance of the socket already closed from peer?
+    /// Information is updated on Receive() !
+    ///  @return true if the socket was closed
+    virtual bool IsSocketPeerClosed(void);
+
+
+    inline bool IsSocketPeerOpen(void) {
+        return !IsSocketPeerClosed();
+    };
+
+
     /// Provides a standard error code for cross platform development by
     /// mapping the operating system error to an error defined by the CSocket
     /// class.
@@ -328,9 +345,14 @@ public:
 
     /// Returns blocking/non-blocking state of socket.
     /// @return true if the socket is non-blocking, else return false.
-    bool IsNonblocking(void) {
+    bool IsNonblocking(void) const {
         return (m_bIsBlocking == false);
     };
+
+    inline bool IsBlocking(void) const {
+      return !IsNonblocking();
+    }
+
 
     /// Set the socket to blocking.
     /// @return true if successful set to blocking, else return false;
@@ -409,14 +431,10 @@ public:
     /// @param nConnectTimeoutSec of timeout in seconds.
     /// @param nConnectTimeoutUsec of timeout in microseconds.
     /// @return true if socket connection timeout was successfully set.
-    void SetConnectTimeout(int32 nConnectTimeoutSec, int32 nConnectTimeoutUsec = 0)
-    {
-        m_stConnectTimeout.tv_sec = nConnectTimeoutSec;
-        m_stConnectTimeout.tv_usec = nConnectTimeoutUsec;
-    };
+    void SetConnectTimeout(int32 nConnectTimeoutSec, int32 nConnectTimeoutUsec = 0);
 
-    inline bool SetConnectTimeoutMillis(int32 nConnectTimeoutMillis) {
-        return SetReceiveTimeout( nConnectTimeoutMillis / 1000 , 1000 * (nConnectTimeoutMillis % 1000) );
+    inline void SetConnectTimeoutMillis(int32 nConnectTimeoutMillis) {
+        SetConnectTimeout( nConnectTimeoutMillis / 1000, 1000 * ( nConnectTimeoutMillis % 1000 ) );
     };
 
     /// Gets the timeout value that specifies the maximum number of seconds a
@@ -671,6 +689,7 @@ protected:
     bool                 m_bIsServerSide;     /// is this the server? => m_stServerSockaddr == localAddr()
                                               ///    and m_stClientSockaddr == peerAddr()
                                               /// else: m_stClientSockaddr == localAddr()
+    bool                 m_bPeerHasClosed;    /// is socket closed from peer?
     struct timeval       m_stConnectTimeout;  /// connection timeout
     struct timeval       m_stRecvTimeout;     /// receive timeout
     struct timeval       m_stSendTimeout;     /// send timeout

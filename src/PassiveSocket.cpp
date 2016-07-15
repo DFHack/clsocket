@@ -245,58 +245,51 @@ CSimpleSocket *CPassiveSocket::Accept()
         return pClientSocket;
     }
 
-    pClientSocket = new CSimpleSocket();
-
     //--------------------------------------------------------------------------
     // Wait for incoming connection.
     //--------------------------------------------------------------------------
-    if (pClientSocket != NULL)
+    CSocketError socketErrno = SocketSuccess;
+
+    m_timer.Initialize();
+    m_timer.SetStartTime();
+
+    nSockLen = sizeof(m_stClientSockaddr);
+
+    do
     {
-        CSocketError socketErrno = SocketSuccess;
+        errno = 0;
+        socket = accept(m_socket, (struct sockaddr *)&m_stClientSockaddr, (socklen_t *)&nSockLen);
 
-        m_timer.Initialize();
-        m_timer.SetStartTime();
-
-        nSockLen = sizeof(m_stClientSockaddr);
-
-        do
+        if (socket != -1)
         {
-            errno = 0;
-            socket = accept(m_socket, (struct sockaddr *)&m_stClientSockaddr, (socklen_t *)&nSockLen);
+            pClientSocket = new CSimpleSocket();
+            if ( !pClientSocket )
+              break;
 
-            if (socket != -1)
-            {
-                pClientSocket->SetSocketHandle(socket);
-                pClientSocket->TranslateSocketError();
-                socketErrno = pClientSocket->GetSocketError();
-                socklen_t nSockLen = sizeof(struct sockaddr);
+            pClientSocket->SetSocketHandle(socket);
+            pClientSocket->TranslateSocketError();
+            socketErrno = pClientSocket->GetSocketError();
+            socklen_t nSockLen = sizeof(struct sockaddr);
 
-                //-------------------------------------------------------------
-                // Store client and server IP and port information for this
-                // connection.
-                //-------------------------------------------------------------
-                getpeername(m_socket, (struct sockaddr *)&pClientSocket->m_stClientSockaddr, &nSockLen);
-                memcpy((void *)&pClientSocket->m_stClientSockaddr, (void *)&m_stClientSockaddr, nSockLen);
+            //-------------------------------------------------------------
+            // Store client and server IP and port information for this
+            // connection.
+            //-------------------------------------------------------------
+            getpeername(m_socket, (struct sockaddr *)&pClientSocket->m_stClientSockaddr, &nSockLen);
+            memcpy((void *)&pClientSocket->m_stClientSockaddr, (void *)&m_stClientSockaddr, nSockLen);
 
-                memset(&pClientSocket->m_stServerSockaddr, 0, nSockLen);
-                getsockname(m_socket, (struct sockaddr *)&pClientSocket->m_stServerSockaddr, &nSockLen);
-            }
-            else
-            {
-                TranslateSocketError();
-                socketErrno = GetSocketError();
-            }
-
-        } while (socketErrno == CSimpleSocket::SocketInterrupted);
-
-        m_timer.SetEndTime();
-
-        if (socketErrno != CSimpleSocket::SocketSuccess)
-        {
-            delete pClientSocket;
-            pClientSocket = NULL;
+            memset(&pClientSocket->m_stServerSockaddr, 0, nSockLen);
+            getsockname(m_socket, (struct sockaddr *)&pClientSocket->m_stServerSockaddr, &nSockLen);
         }
-    }
+        else
+        {
+            TranslateSocketError();
+            socketErrno = GetSocketError();
+        }
+
+    } while (socketErrno == CSimpleSocket::SocketInterrupted);
+
+    m_timer.SetEndTime();
 
     return pClientSocket;
 }

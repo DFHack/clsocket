@@ -46,6 +46,8 @@
 #include <sys/ioctl.h>
 #endif
 
+#define PRINT_CLOSE 0
+
 
 CSimpleSocket::CSimpleSocket(CSocketType nType) :
     m_socket(INVALID_SOCKET),
@@ -54,9 +56,10 @@ CSimpleSocket::CSimpleSocket(CSocketType nType) :
     m_nSocketType(SocketTypeInvalid), m_nBytesReceived(-1),
     m_nBytesSent(-1), m_nFlags(0),
     m_bIsBlocking(true),
-    m_bIsServerSide(false)
+    m_bIsServerSide(false),
+    m_bPeerHasClosed(true)
 {
-    SetConnectTimeout(1, 0);
+    SetConnectTimeout(1, 0);    // default timeout for connection
     memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
     memset(&m_stSendTimeout, 0, sizeof(struct timeval));
     memset(&m_stLinger, 0, sizeof(struct linger));
@@ -216,7 +219,7 @@ bool CSimpleSocket::ConnectTCP(const char *pAddr, uint16 nPort)
                 ((GetSocketError() == CSimpleSocket::SocketEwouldblock) ||
                  (GetSocketError() == CSimpleSocket::SocketEinprogress)))
         {
-            bRetVal = Select(GetConnectTimeoutSec(), GetConnectTimeoutUSec());
+            bRetVal = Select( m_stConnectTimeout.tv_sec, m_stConnectTimeout.tv_usec );
         }
     }
     else
@@ -226,6 +229,8 @@ bool CSimpleSocket::ConnectTCP(const char *pAddr, uint16 nPort)
     }
 
     m_timer.SetEndTime();
+    if ( bRetVal )
+      m_bPeerHasClosed = false;
 
     return bRetVal;
 }
@@ -284,6 +289,7 @@ bool CSimpleSocket::ConnectUDP(const char *pAddr, uint16 nPort)
     if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
     {
         bRetVal = true;
+        m_bPeerHasClosed = false;
     }
 
     TranslateSocketError();
@@ -347,6 +353,7 @@ bool CSimpleSocket::ConnectRAW(const char *pAddr, uint16 nPort)
     if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
     {
         bRetVal = true;
+        m_bPeerHasClosed = false;
     }
 
     TranslateSocketError();
@@ -390,6 +397,7 @@ bool CSimpleSocket::Initialize()
     //-------------------------------------------------------------------------
     // Create the basic Socket Handle
     //-------------------------------------------------------------------------
+    m_bPeerHasClosed = true;
     m_timer.Initialize();
     m_timer.SetStartTime();
     m_socket = socket(m_nSocketDomain, m_nSocketType, 0);
@@ -410,6 +418,7 @@ bool CSimpleSocket::Open(const char *pAddr, uint16 nPort)
 {
     bool bRetVal = false;
     m_bIsServerSide = false;
+    m_bPeerHasClosed = true;
 
     if (IsSocketValid() == false)
     {
@@ -692,9 +701,9 @@ uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
     if (m_socket != CSimpleSocket::SocketError)
     {
         int nRetVal = SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
+        TranslateSocketError();
         if ( !nRetVal )
             return GetWindowSize(nOptionName);
-        TranslateSocketError();
     }
     else
     {
@@ -759,6 +768,7 @@ void CSimpleSocket::SetSocketHandle(SOCKET socket, bool bIsServerSide )
 {
     m_socket = socket;
     m_bIsServerSide = bIsServerSide;
+    m_bPeerHasClosed = false;
 }
 
 
@@ -1004,6 +1014,18 @@ int32 CSimpleSocket::Send(const struct iovec *sendVector, int32 nNumItems)
 
 //------------------------------------------------------------------------------
 //
+// SetConnectTimeout()
+//
+//------------------------------------------------------------------------------
+void CSimpleSocket::SetConnectTimeout(int32 nConnectTimeoutSec, int32 nConnectTimeoutUsec)
+{
+    m_stConnectTimeout.tv_sec = nConnectTimeoutSec;
+    m_stConnectTimeout.tv_usec = nConnectTimeoutUsec;
+}
+
+
+//------------------------------------------------------------------------------
+//
 // SetReceiveTimeout()
 //
 //------------------------------------------------------------------------------
@@ -1191,6 +1213,13 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes, uint8 * pBuffer )
         {
             m_nBytesReceived = RECV(m_socket, (pWorkBuffer + m_nBytesReceived),
                                     nMaxBytes, m_nFlags);
+            if ( 0 == m_nBytesReceived )
+            {
+#if PRINT_CLOSE
+              fprintf(stderr, "CSimpleSocket::Receive() = 0 Bytes ==> peer closed connection!\n");
+#endif
+              m_bPeerHasClosed = true;
+            }
             TranslateSocketError();
         } while ((GetSocketError() == CSimpleSocket::SocketInterrupted));
 
@@ -1403,7 +1432,21 @@ int32 CSimpleSocket::SendFile(int32 nOutFd, int32 nInFd, off_t *pOffset, int32 n
 
 bool CSimpleSocket::IsSocketValid(void)
 {
+#if PRINT_CLOSE
+  if ( m_socket == SocketError )
+    fprintf(stderr, "reporting CSimpleSocket::IsSocketValid() == false.\n" );
+#endif
     return (m_socket != SocketError);
+}
+
+
+bool CSimpleSocket::IsSocketPeerClosed(void)
+{
+#if PRINT_CLOSE
+  if ( m_bPeerHasClosed )
+    fprintf(stderr, "reporting CSimpleSocket::IsSocketPeerClosed() == true.\n" );
+#endif
+  return m_bPeerHasClosed;
 }
 
 
