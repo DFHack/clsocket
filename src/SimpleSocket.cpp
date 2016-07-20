@@ -45,8 +45,10 @@
 #if defined(_LINUX) || defined(_DARWIN)
 #include <sys/ioctl.h>
 #endif
+#include <string.h>
 
-#define PRINT_CLOSE 0
+#define PRINT_CLOSE   0
+#define PRINT_ERRORS  0
 
 
 CSimpleSocket::CSimpleSocket(CSocketType nType) :
@@ -1502,7 +1504,8 @@ void CSimpleSocket::ClearSystemError(void)
 void CSimpleSocket::TranslateSocketError(void)
 {
 #if defined(_LINUX) || defined(_DARWIN)
-    switch (errno)
+    int systemErrno = errno;
+    switch (systemErrno)
     {
     case EXIT_SUCCESS:
         SetSocketError(CSimpleSocket::SocketSuccess);
@@ -1560,9 +1563,19 @@ void CSimpleSocket::TranslateSocketError(void)
         SetSocketError(CSimpleSocket::SocketAddressInUse);
         break;
     default:
+  #if PRINT_ERRORS
+        fprintf( stderr, "\nCSimpleSocket::SocketEunknown: errno=%d: %s\n", systemErrno, strerror(systemErrno) );
+  #endif
         SetSocketError(CSimpleSocket::SocketEunknown);
         break;
     }
+  #if PRINT_ERRORS
+    if ( systemErrno != EXIT_SUCCESS && systemErrno != EWOULDBLOCK )
+    {
+      fprintf( stderr, "\nCSimpleSocket Error: %s == system %s\n", DescribeError(), strerror(systemErrno) );
+    }
+  #endif
+
 #elif defined(WIN32)
     int32 nError = WSAGetLastError();
     switch (nError)
