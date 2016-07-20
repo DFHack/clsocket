@@ -258,6 +258,10 @@ public:
     };
 
 
+    /// Clear "last" system error
+    /// - so that TranslateSocketError() does not try to translate someone else's error!
+    void ClearSystemError(void);
+
     /// Provides a standard error code for cross platform development by
     /// mapping the operating system error to an error defined by the CSocket
     /// class.

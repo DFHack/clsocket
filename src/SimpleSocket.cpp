@@ -162,6 +162,8 @@ bool CSimpleSocket::ConnectTCP(const char *pAddr, uint16 nPort)
     // this is the Client
     m_bIsServerSide = false;
 
+    ClearSystemError();
+
     //------------------------------------------------------------------
     // Preconnection setup that must be performed
     //------------------------------------------------------------------
@@ -248,6 +250,8 @@ bool CSimpleSocket::ConnectUDP(const char *pAddr, uint16 nPort)
     // this is the Client
     m_bIsServerSide = false;
 
+    ClearSystemError();
+
     //------------------------------------------------------------------
     // Pre-connection setup that must be performed
     //------------------------------------------------------------------
@@ -312,6 +316,8 @@ bool CSimpleSocket::ConnectRAW(const char *pAddr, uint16 nPort)
     // this is the Client
     m_bIsServerSide = false;
 
+    ClearSystemError();
+
     //------------------------------------------------------------------
     // Pre-connection setup that must be performed
     //------------------------------------------------------------------
@@ -371,7 +377,7 @@ bool CSimpleSocket::ConnectRAW(const char *pAddr, uint16 nPort)
 //------------------------------------------------------------------------------
 bool CSimpleSocket::Initialize()
 {
-    errno = CSimpleSocket::SocketSuccess;
+  ClearSystemError();
 
 #ifdef WIN32
     //-------------------------------------------------------------------------
@@ -676,8 +682,10 @@ uint32 CSimpleSocket::GetWindowSize(uint32 nOptionName)
         //---------------------------------------------------------------------
         // query for buffer size
         //---------------------------------------------------------------------
-        GETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nTcpWinSize, &nLen);
-        TranslateSocketError();
+        if (GETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nTcpWinSize, &nLen) == SocketError)
+        {
+            TranslateSocketError();
+        }
     }
     else
     {
@@ -700,10 +708,12 @@ uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
     //-------------------------------------------------------------------------
     if (m_socket != CSimpleSocket::SocketError)
     {
-        int nRetVal = SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
-        TranslateSocketError();
-        if ( !nRetVal )
-            return GetWindowSize(nOptionName);
+        if (SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize)) == SocketError)
+        {
+            TranslateSocketError();
+        }
+
+        return GetWindowSize(nOptionName);
     }
     else
     {
@@ -731,8 +741,10 @@ bool CSimpleSocket::DisableNagleAlgoritm()
     {
         bRetVal = true;
     }
-
-    TranslateSocketError();
+    else
+    {
+        TranslateSocketError();
+    }
 
     return bRetVal;
 }
@@ -755,8 +767,10 @@ bool CSimpleSocket::EnableNagleAlgoritm()
     {
         bRetVal = true;
     }
-
-    TranslateSocketError();
+    else
+    {
+        TranslateSocketError();
+    }
 
     return bRetVal;
 }
@@ -779,6 +793,7 @@ void CSimpleSocket::SetSocketHandle(SOCKET socket, bool bIsServerSide )
 //------------------------------------------------------------------------------
 int32 CSimpleSocket::Send(const uint8 *pBuf, size_t bytesToSend)
 {
+    ClearSystemError();
     SetSocketError(SocketSuccess);
     m_nBytesSent = 0;
 
@@ -881,14 +896,14 @@ bool CSimpleSocket::Close(void)
     //--------------------------------------------------------------------------
     if (IsSocketValid())
     {
+        ClearSystemError();
         if (CLOSE(m_socket) != CSimpleSocket::SocketError)
         {
             m_socket = INVALID_SOCKET;
             bRetVal = true;
         }
+        TranslateSocketError();
     }
-
-    TranslateSocketError();
 
     return bRetVal;
 }
@@ -904,7 +919,10 @@ bool CSimpleSocket::Shutdown(CShutdownMode nShutdown)
     CSocketError nRetVal = SocketEunknown;
 
     nRetVal = (CSocketError)shutdown(m_socket, CSimpleSocket::Sends);
-    TranslateSocketError();
+    if (nRetVal == SocketError)
+    {
+        TranslateSocketError();
+    }
 
     return (nRetVal == CSimpleSocket::SocketSuccess) ? true: false;
 }
@@ -1120,8 +1138,10 @@ bool CSimpleSocket::SetOptionReuseAddr()
     {
         bRetVal = true;
     }
-
-    TranslateSocketError();
+    else
+    {
+        TranslateSocketError();
+    }
 
     return bRetVal;
 }
@@ -1143,8 +1163,10 @@ bool CSimpleSocket::SetOptionLinger(bool bEnable, uint16 nTimeInSeconds)
     {
         bRetVal = true;
     }
-
-    TranslateSocketError();
+    else
+    {
+        TranslateSocketError();
+    }
 
     return bRetVal;
 }
@@ -1196,6 +1218,7 @@ int32 CSimpleSocket::Receive(int32 nMaxBytes, uint8 * pBuffer )
         pWorkBuffer = m_pBuffer;
     }
 
+    ClearSystemError();
     SetSocketError(SocketSuccess);
 
     m_timer.Initialize();
@@ -1365,6 +1388,7 @@ bool CSimpleSocket::SetBlocking(void)
 
     if (ioctlsocket(m_socket, FIONBIO, (ULONG *)&nCurFlags) != 0)
     {
+        TranslateSocketError();
         return false;
     }
 #else
@@ -1396,6 +1420,8 @@ bool CSimpleSocket::SetBlocking(void)
 int32 CSimpleSocket::SendFile(int32 nOutFd, int32 nInFd, off_t *pOffset, int32 nCount)
 {
     int32  nOutCount = CSimpleSocket::SocketError;
+
+    ClearSystemError();
 
     static char szData[SOCKET_SENDFILE_BLOCKSIZE];
     int32       nInCount = 0;
@@ -1447,6 +1473,24 @@ bool CSimpleSocket::IsSocketPeerClosed(void)
     fprintf(stderr, "reporting CSimpleSocket::IsSocketPeerClosed() == true.\n" );
 #endif
   return m_bPeerHasClosed;
+}
+
+
+//------------------------------------------------------------------------------
+//
+// ClearSystemError() -
+//
+//------------------------------------------------------------------------------
+
+void CSimpleSocket::ClearSystemError(void)
+{
+#if defined(_LINUX) || defined(_DARWIN)
+  errno = EXIT_SUCCESS;
+#elif defined(WIN32)
+  WSASetLastError( EXIT_SUCCESS );
+#else
+#error unsupported platform!
+#endif
 }
 
 
@@ -1668,6 +1712,8 @@ bool CSimpleSocket::Select(int32 nTimeoutSec, int32 nTimeoutUSec, bool bAwakeWhe
         pTimeout = &timeout;
     }
 
+    ClearSystemError();
+
     nNumDescriptors = SELECT(m_socket+1, &m_readFds, &m_writeFds, &m_errorFds, pTimeout);
 
     //----------------------------------------------------------------------
@@ -1676,6 +1722,13 @@ bool CSimpleSocket::Select(int32 nTimeoutSec, int32 nTimeoutUSec, bool bAwakeWhe
     if (nNumDescriptors == 0)
     {
         SetSocketError(CSimpleSocket::SocketTimedout);
+    }
+    //----------------------------------------------------------------------
+    // Handle error
+    //----------------------------------------------------------------------
+    else if ( nNumDescriptors == SocketError )
+    {
+      TranslateSocketError();
     }
     //----------------------------------------------------------------------
     // If a file descriptor (read/write) is set then check the

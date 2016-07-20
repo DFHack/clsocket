@@ -93,6 +93,8 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
     // multicast address/port is the server
     memcpy(&m_stServerSockaddr,&m_stMulticastGroup,sizeof(m_stServerSockaddr));
 
+    ClearSystemError();
+
     //--------------------------------------------------------------------------
     // Bind to the specified port
     //--------------------------------------------------------------------------
@@ -149,6 +151,8 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
 //------------------------------------------------------------------------------
 bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBacklog)
 {
+    ClearSystemError();
+
     bool           bRetVal = false;
 #ifdef WIN32
     ULONG          inAddr;
@@ -254,6 +258,8 @@ CSimpleSocket *CPassiveSocket::Accept()
     m_timer.SetStartTime();
 
     nSockLen = sizeof(m_stClientSockaddr);
+
+    ClearSystemError();
 
     do
     {
