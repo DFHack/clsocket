@@ -5,6 +5,7 @@ project(clsocket)
 set(BUILD_MAJOR "1")
 set(BUILD_MINOR "4")
 set(BUILD_VERSION "3")
+set(BUILD_VERSION ${BUILD_MAJOR}.${BUILD_MINOR}.${BUILD_VERSION})
 
 include_directories(src)
 
@@ -77,6 +78,9 @@ if(NOT CLSOCKET_DEP_ONLY)
 else()
 
 endif()
+
+set_target_properties(clsocket PROPERTIES VERSION ${BUILD_VERSION}
+                                          SOVERSION ${BUILD_MAJOR})
 
 if(UNIX)
     OPTION(CLSOCKET_EXAMPLES "Build the examples" OFF)
