@@ -7,8 +7,6 @@ set(BUILD_MINOR "4")
 set(BUILD_VERSION "3")
 set(BUILD_VERSION ${BUILD_MAJOR}.${BUILD_MINOR}.${BUILD_VERSION})
 
-include_directories(src)
-
 SET(CLSOCKET_HEADERS
 src/ActiveSocket.h
 src/Host.h
@@ -45,6 +43,11 @@ endif()
 # make the lib
 add_library(clsocket ${CLSOCKET_SOURCES})
 TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
+# target_include_directories was added in 2.8.11
+set_target_properties(clsocket PROPERTIES
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/src
+    INTERFACE_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/src
+)
 
 # install into configured prefix
 install(TARGETS clsocket DESTINATION lib)
