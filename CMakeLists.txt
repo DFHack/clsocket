@@ -57,7 +57,7 @@ add_library(clsocket ${CLSOCKET_SOURCES})
 TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
 
 # install into configured prefix
-install(TARGETS clsocket ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
+install(TARGETS clsocket DESTINATION lib)
 install(FILES ${CLSOCKET_HEADERS} DESTINATION include)
 
 set_target_properties(clsocket PROPERTIES VERSION ${BUILD_VERSION}
