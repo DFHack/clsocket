@@ -51,7 +51,7 @@ CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort)
 {
     bool           bRetVal = false;
-#ifdef WIN32
+#ifdef _WIN32
     ULONG          inAddr;
 #else
     int32          nReuse;
@@ -133,7 +133,7 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
 bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBacklog)
 {
     bool           bRetVal = false;
-#ifdef WIN32
+#ifdef _WIN32
     ULONG          inAddr;
 #else
     int32          nReuse;
@@ -147,7 +147,7 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
     // descriptor to be reused immediately after the socket is closed instead
     // of setting in a TIMED_WAIT state.
     //--------------------------------------------------------------------------
-#ifdef _LINUX
+#ifdef __unix__
     SETSOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&nReuse, sizeof(int32));
     SETSOCKOPT(m_socket, IPPROTO_TCP, IP_TOS, &nReuse, sizeof(int32));
 #endif

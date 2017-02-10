@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include "PassiveSocket.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 
   // usually defined with #include <unistd.h>

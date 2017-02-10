@@ -25,9 +25,6 @@ make -BUILD=Release && make install
 
 That is it now you are off and running.
 
-NOTE: When using the library with WINDOWS you must define _WIN32 and when using with LINUX
-      you must define _LINUX.
-
 ------------------------------------------------------------------------------------------
 * SimpleSocket Class Overview
 ------------------------------------------------------------------------------------------

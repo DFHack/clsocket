@@ -28,19 +28,9 @@ SET_SOURCE_FILES_PROPERTIES( ${CLSOCKET_HEADERS} PROPERTIES HEADER_FILE_ONLY TRU
 # append to sources so that dependency checks work on headers
 LIST(APPEND CLSOCKET_SOURCES ${CLSOCKET_HEADERS})
 
-# OS and compiler checks. 
-if(UNIX)
-    # linux / normal unix
-    add_definitions(-D_LINUX)
-    if(CYGWIN)
-        # Special Cygwin stuff here
-    elseif(APPLE)
-        # Special Apple stuff here
-        remove_definitions(-D_LINUX)
-        add_definitions(-D_DARWIN)
-    endif()
-elseif(WIN32)
-    add_definitions(-DWIN32 -D_WINSOCK_DEPRECATED_NO_WARNINGS)
+# OS and compiler checks.
+if(WIN32)
+    add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
     SET(PROJECT_LIBS Ws2_32.lib)
 endif()
 
