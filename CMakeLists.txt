@@ -21,12 +21,6 @@ src/ActiveSocket.cpp
 src/PassiveSocket.cpp
 )
 
-# OS and compiler checks.
-if(WIN32)
-    add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
-    SET(PROJECT_LIBS Ws2_32.lib)
-endif()
-
 option(BUILD_SHARED_LIBS "Build libs as shared" ON)
 if(DEFINED CLSOCKET_SHARED)
     message(FATAL_ERROR "The CLSOCKET_SHARED option is deprecated, instead use BUILD_SHARED_LIBS.")
@@ -38,7 +32,10 @@ endif()
 # make the lib
 # add headers so that they appear in IDEs
 add_library(clsocket ${CLSOCKET_SOURCES} ${CLSOCKET_HEADERS})
-TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
+if(WIN32)
+    add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
+    target_link_libraries(clsocket PRIVATE Ws2_32)
+endif()
 # target_include_directories was added in 2.8.11
 set_target_properties(clsocket PROPERTIES
     INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/src
@@ -57,14 +54,14 @@ if(UNIX)
 
     if(CLSOCKET_EXAMPLES)
         ADD_EXECUTABLE(clsocket-example examples/RecvAsync.cpp)
-        TARGET_LINK_LIBRARIES(clsocket-example clsocket pthread)
+        target_link_libraries(clsocket-example clsocket pthread)
         install(TARGETS clsocket-example DESTINATION bin)
 
         ADD_EXECUTABLE(querydaytime-example examples/QueryDayTime.cpp)
-        TARGET_LINK_LIBRARIES(querydaytime-example clsocket)
+        target_link_libraries(querydaytime-example clsocket)
 
         ADD_EXECUTABLE(echoserver-example examples/EchoServer.cpp)
-        TARGET_LINK_LIBRARIES(echoserver-example clsocket)
+        target_link_libraries(echoserver-example clsocket)
     endif()
 endif()
 
