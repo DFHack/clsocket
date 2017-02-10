@@ -21,11 +21,6 @@ src/ActiveSocket.cpp
 src/PassiveSocket.cpp
 )
 
-# mark headers as headers...
-SET_SOURCE_FILES_PROPERTIES( ${CLSOCKET_HEADERS} PROPERTIES HEADER_FILE_ONLY TRUE )
-# append to sources so that dependency checks work on headers
-LIST(APPEND CLSOCKET_SOURCES ${CLSOCKET_HEADERS})
-
 # OS and compiler checks.
 if(WIN32)
     add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
@@ -41,7 +36,8 @@ if(DEFINED CLSOCKET_DEP_ONLY)
 endif()
 
 # make the lib
-add_library(clsocket ${CLSOCKET_SOURCES})
+# add headers so that they appear in IDEs
+add_library(clsocket ${CLSOCKET_SOURCES} ${CLSOCKET_HEADERS})
 TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
 # target_include_directories was added in 2.8.11
 set_target_properties(clsocket PROPERTIES
