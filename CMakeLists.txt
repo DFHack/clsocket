@@ -40,17 +40,8 @@ if(UNIX)
         add_definitions(-D_DARWIN)
     endif()
 elseif(WIN32)
-    add_definitions(-DWIN32)
+    add_definitions(-DWIN32 -D_WINSOCK_DEPRECATED_NO_WARNINGS)
     SET(PROJECT_LIBS Ws2_32.lib)
-    if(MINGW)
-        # Special MINGW stuff here
-    elseif(MSVC)
-        # Special MSVC stuff here
-        add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
-    else()
-        # No idea what it is, but there's a good chance it's too weird.
-        MESSAGE( FATAL_ERROR "Using unknown WIN32 compiler... NOT. Please add to build system." )
-    endif()
 endif()
 
 OPTION(CLSOCKET_SHARED "Build clsocket lib as shared." ON)
