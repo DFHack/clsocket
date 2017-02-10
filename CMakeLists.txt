@@ -7,7 +7,7 @@ set(BUILD_MINOR "4")
 set(BUILD_VERSION "3")
 set(BUILD_VERSION ${BUILD_MAJOR}.${BUILD_MINOR}.${BUILD_VERSION})
 
-SET(CLSOCKET_HEADERS
+set(CLSOCKET_HEADERS
 src/ActiveSocket.h
 src/Host.h
 src/PassiveSocket.h
@@ -15,7 +15,7 @@ src/SimpleSocket.h
 src/StatTimer.h
 )
 
-SET(CLSOCKET_SOURCES
+set(CLSOCKET_SOURCES
 src/SimpleSocket.cpp
 src/ActiveSocket.cpp
 src/PassiveSocket.cpp
@@ -50,17 +50,17 @@ set_target_properties(clsocket PROPERTIES VERSION ${BUILD_VERSION}
                                           SOVERSION ${BUILD_MAJOR})
 
 if(UNIX)
-    OPTION(CLSOCKET_EXAMPLES "Build the examples" OFF)
+    option(CLSOCKET_EXAMPLES "Build the examples" OFF)
 
     if(CLSOCKET_EXAMPLES)
-        ADD_EXECUTABLE(clsocket-example examples/RecvAsync.cpp)
+        add_executable(clsocket-example examples/RecvAsync.cpp)
         target_link_libraries(clsocket-example clsocket pthread)
         install(TARGETS clsocket-example DESTINATION bin)
 
-        ADD_EXECUTABLE(querydaytime-example examples/QueryDayTime.cpp)
+        add_executable(querydaytime-example examples/QueryDayTime.cpp)
         target_link_libraries(querydaytime-example clsocket)
 
-        ADD_EXECUTABLE(echoserver-example examples/EchoServer.cpp)
+        add_executable(echoserver-example examples/EchoServer.cpp)
         target_link_libraries(echoserver-example clsocket)
     endif()
 endif()
