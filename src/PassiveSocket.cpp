@@ -203,7 +203,9 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
 
     if (bRetVal == false)
     {
+		CSocketError err = GetSocketError();
         Close();
+		SetSocketError(err);
     }
 
     return bRetVal;
