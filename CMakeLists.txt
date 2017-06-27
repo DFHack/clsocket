@@ -46,6 +46,7 @@ elseif(WIN32)
         # Special MINGW stuff here
     elseif(MSVC)
         # Special MSVC stuff here
+        add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
     else()
         # No idea what it is, but there's a good chance it's too weird.
         MESSAGE( FATAL_ERROR "Using unknown WIN32 compiler... NOT. Please add to build system." )
