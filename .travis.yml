@@ -2,12 +2,12 @@ sudo: false
 language: cpp
 matrix:
   include:
-    - env: GCC_VERSION=4.5
+    - env: GCC_VERSION=4.4
       addons:
         apt:
           packages:
-            - gcc-4.5-multilib
-            - g++-4.5-multilib
+            - gcc-4.4-multilib
+            - g++-4.4-multilib
     - env: GCC_VERSION=4.8
       addons:
         apt:
