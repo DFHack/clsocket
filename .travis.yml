@@ -8,12 +8,6 @@ matrix:
           packages:
             - gcc-4.8-multilib
             - g++-4.8-multilib
-    - env: GCC_VERSION=6
-      addons:
-        apt:
-          packages:
-            - gcc-6-multilib
-            - g++-6-multilib
 script:
 - mkdir build-travis
 - cd build-travis
