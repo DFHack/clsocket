@@ -309,14 +309,12 @@ uint32 CSimpleSocket::GetWindowSize(uint32 nOptionName)
 //------------------------------------------------------------------------------
 uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
 {
-    uint32 nRetVal = 0;
-
     //-------------------------------------------------------------------------
     // no socket given, return system default allocate our own new socket
     //-------------------------------------------------------------------------
     if (m_socket != CSimpleSocket::SocketError)
     {
-        nRetVal = SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
+        SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
         TranslateSocketError();
     }
     else
