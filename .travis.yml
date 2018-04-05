@@ -2,20 +2,18 @@ sudo: false
 language: cpp
 matrix:
   include:
-    - env: GCC_VERSION=4.5
-      addons:
-        apt:
-          packages:
-            - gcc-4.5-multilib
-            - g++-4.5-multilib
     - env: GCC_VERSION=4.8
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
           packages:
             - gcc-4.8-multilib
             - g++-4.8-multilib
+    - env: GCC_VERSION=6
+      addons:
+        apt:
+          packages:
+            - gcc-6-multilib
+            - g++-6-multilib
 script:
 - mkdir build-travis
 - cd build-travis
