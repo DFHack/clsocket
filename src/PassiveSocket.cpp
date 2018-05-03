@@ -78,21 +78,26 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
     // If no IP Address (interface ethn) is supplied, or the loop back is
     // specified then bind to any interface, else bind to specified interface.
     //--------------------------------------------------------------------------
-    if ((pInterface == NULL) || (!strlen(pInterface)))
+    if (pInterface && pInterface[0])
     {
-        m_stMulticastGroup.sin_addr.s_addr = htonl(INADDR_ANY);
+      inet_pton(AF_INET, pInterface, &inAddr);
     }
     else
     {
-        if ((inAddr = inet_addr(pInterface)) != INADDR_NONE)
-        {
-            m_stMulticastGroup.sin_addr.s_addr = inAddr;
-        }
+      inAddr = INADDR_ANY;
+    }
+
+    if (pGroup && pGroup[0] != 0)
+    {
+      m_stMulticastGroup.sin_addr.s_addr = htonl(INADDR_ANY);
+    }
+    else
+    {
+      m_stMulticastGroup.sin_addr.s_addr = inAddr;
     }
 
     // multicast address/port is the server
     memcpy(&m_stServerSockaddr,&m_stMulticastGroup,sizeof(m_stServerSockaddr));
-
     ClearSystemError();
 
     //--------------------------------------------------------------------------
@@ -101,13 +106,13 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
     m_bIsServerSide = true;
     if (bind(m_socket, (struct sockaddr *)&m_stMulticastGroup, sizeof(m_stMulticastGroup)) == 0)
     {
-        if ( pGroup )
+        if ( pGroup && pGroup[0] != 0 )
         {
             //----------------------------------------------------------------------
             // Join the multicast group
             //----------------------------------------------------------------------
-            m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr(pGroup);
-            m_stMulticastRequest.imr_interface.s_addr = m_stMulticastGroup.sin_addr.s_addr;
+            inet_pton(AF_INET, pGroup, &m_stMulticastRequest.imr_multiaddr.s_addr);
+            m_stMulticastRequest.imr_interface.s_addr = inAddr;
 
             if ( SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                                       (void *)&m_stMulticastRequest,
@@ -146,7 +151,9 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
 
 //------------------------------------------------------------------------------
 //
-// Listen() -
+// Listen() - Create a listening socket (server) at local ip address 'x.x.x.x' or 'localhost'
+//            waiting for an incoming connection from client(s)
+// also see .h
 //
 //------------------------------------------------------------------------------
 bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBacklog)
@@ -185,7 +192,8 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
     }
     else
     {
-        if ((inAddr = inet_addr(pAddr)) != INADDR_NONE)
+        inet_pton(AF_INET, pAddr, &inAddr);
+        if (inAddr != INADDR_NONE)
         {
             m_stServerSockaddr.sin_addr.s_addr = inAddr;
         }
@@ -266,7 +274,7 @@ CSimpleSocket *CPassiveSocket::Accept()
         errno = 0;
         socket = accept(m_socket, (struct sockaddr *)&m_stClientSockaddr, (socklen_t *)&nSockLen);
 
-        if (socket != -1)
+        if (socket != INVALID_SOCKET)
         {
             pClientSocket = new CSimpleSocket();
             if ( !pClientSocket )

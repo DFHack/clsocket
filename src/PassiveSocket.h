@@ -97,7 +97,8 @@ public:
         return BindMulticast(pInterface, pNoGroup, nPort);
     }
 
-    /// Create a listening socket at local ip address 'x.x.x.x' or 'localhost'
+    /// Create a listening socket (server) at local ip address 'x.x.x.x' or 'localhost'
+    ///   waiting for an incoming connection from client(s)
     /// if pAddr is NULL on port nPort.
     ///
     ///  @param pAddr specifies the IP address on which to listen.

@@ -149,9 +149,10 @@ public:
         SocketInvalidPort,         ///< Invalid destination port specified.
         SocketConnectionRefused,   ///< No server is listening at remote address.
         SocketTimedout,            ///< Timed out while attempting operation.
-        SocketEwouldblock,         ///< Operation would block if socket were blocking.
+        SocketEwouldblock,         ///< Operation would block if socket were blocking. On Accept/Receive/Send/
         SocketNotconnected,        ///< Currently not connected.
-        SocketEinprogress,         ///< Socket is non-blocking and the connection cannot be completed immediately
+        SocketEinprogress,         ///< Socket is non-blocking and the connection cannot be completed immediately.
+                                   ///  only on Open/ConnectTo/..
         SocketInterrupted,         ///< Call was interrupted by a signal that was caught before a valid connection arrived.
         SocketConnectionAborted,   ///< The connection has been aborted.
         SocketProtocolError,       ///< Invalid protocol for operation.
@@ -160,7 +161,8 @@ public:
         SocketConnectionReset,     ///< Connection was forcibly closed by the remote host.
         SocketAddressInUse,        ///< Address already in use.
         SocketInvalidPointer,      ///< Pointer type supplied as argument is invalid.
-        SocketEunknown             ///< Unknown error please report to mark@carrierlabs.com
+        SocketEunknown,            ///< Unknown error
+        SocketNetworkError         ///< Several network errors
     } CSocketError;
 
 public:
@@ -175,7 +177,8 @@ public:
     /// @return true if properly initialized.
     virtual bool Initialize(void);
 
-    /// Established a connection to the address specified by pAddr.
+    /// Establishes a connection to the (server-)address specified by pAddr
+    ///     and (server-)port specified by nPort.
     /// Connection-based protocol sockets (CSocket::SocketTypeTcp) may
     /// successfully call Open() only once, however; connectionless protocol
     /// sockets (CSocket::SocketTypeUdp) may use Open() multiple times to
@@ -239,10 +242,10 @@ public:
     /// Does the current instance of the socket object contain a valid socket
     /// descriptor.
     ///  @return true if the socket object contains a valid socket descriptor.
-    virtual bool IsSocketValid(void);
+    virtual bool IsSocketValid(void) const;
 
 
-    inline bool IsSocketInvalid(void) {
+    inline bool IsSocketInvalid(void) const {
         return !IsSocketValid();
     };
 
@@ -250,10 +253,10 @@ public:
     /// Is the current instance of the socket already closed from peer?
     /// Information is updated on Receive() !
     ///  @return true if the socket was closed
-    virtual bool IsSocketPeerClosed(void);
+    virtual bool IsSocketPeerClosed(void) const;
 
 
-    inline bool IsSocketPeerOpen(void) {
+    inline bool IsSocketPeerOpen(void) const {
         return !IsSocketPeerClosed();
     };
 
@@ -627,6 +630,14 @@ public:
     /// @return false if failed to set socket option otherwise return true;
     bool EnableNagleAlgoritm();
 
+    /// retrieve IPv4 address via getaddrinfo() as uint32 in HostByteOrder
+    ///   as static member
+    /// @return 0 if failed
+    static uint32 GetIPv4AddrInfoStatic( const char *pAddr, CSocketType nSocketType = SocketTypeTcp );
+
+    /// retrieve IPv4 address via getaddrinfo() as uint32 in HostByteOrder
+    /// @return 0 if failed
+    uint32 GetIPv4AddrInfo( const char *pAddr );
 
 protected:
     /// Set internal socket error to that specified error
@@ -665,6 +676,10 @@ private:
     bool Flush();
 
     CSimpleSocket *operator=(CSimpleSocket &socket);
+
+    static bool GetAddrInfoStatic(const char *pAddr, uint16 nPort, struct in_addr * pOutIpAddress, CSocketType nSocketType = SocketTypeTcp );
+
+    bool GetAddrInfo(const char *pAddr, uint16 nPort, struct in_addr * pOutIpAddress );
 
     /// Utility function used to create a TCP connection, called from Open().
     ///  @return true if successful connection made, otherwise false.

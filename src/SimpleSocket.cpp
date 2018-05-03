@@ -46,9 +46,30 @@
 #include <sys/ioctl.h>
 #endif
 #include <string.h>
+#include <assert.h>
+
+#ifdef _MSC_VER
+#pragma warning( disable : 4996 )
+#define snprintf _snprintf
+#endif
 
 #define PRINT_CLOSE   0
 #define PRINT_ERRORS  0
+#define CHECK_PRINT_RUNTIME_ERR   0
+
+
+#if CHECK_PRINT_RUNTIME_ERR
+
+#include <stdio.h>
+
+static void CoreDump()
+{
+  int * ptr = nullptr;
+  while (1)
+    *ptr++ = -1;
+}
+
+#endif
 
 
 CSimpleSocket::CSimpleSocket(CSocketType nType) :
@@ -151,6 +172,155 @@ CSimpleSocket *CSimpleSocket::operator=(CSimpleSocket &socket)
 }
 
 
+bool CSimpleSocket::GetAddrInfoStatic(const char *pAddr, uint16 nPort, struct in_addr * pOutIpAddress, CSocketType nSocketType )
+{
+  char aServ[64];
+  char * pServ = aServ;
+  struct addrinfo hints, *servinfo, *p;
+  int rv;
+  int nSocketDomain = 0;
+
+  memset(&hints, 0, sizeof(hints));
+  switch ( nSocketType )
+  {
+  default:
+  case SocketTypeInvalid:
+#ifdef _WIN32
+  case SocketTypeRaw:
+#endif
+    return false;
+  case SocketTypeTcp6:
+    hints.ai_family = nSocketDomain = AF_INET6;
+    hints.ai_socktype = SOCK_STREAM;
+    break;
+  case SocketTypeTcp:
+    hints.ai_family = nSocketDomain = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    break;
+  case SocketTypeUdp6:
+    hints.ai_family = nSocketDomain = AF_INET6;
+    hints.ai_socktype = SOCK_DGRAM;
+    break;
+  case SocketTypeUdp:
+    hints.ai_family = nSocketDomain = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    break;
+#if defined(_LINUX) && !defined(_DARWIN)
+  case SocketTypeRaw:
+    hints.ai_family = nSocketDomain = AF_PACKET;
+    hints.ai_socktype = SOCK_RAW;
+    break;
+#endif
+  }
+
+  if ( nPort )
+    snprintf( aServ, 63, "%d", (int)nPort );
+  else
+    pServ = 0;
+
+  rv = ::getaddrinfo(pAddr, pServ, &hints, &servinfo );
+  if ( rv != 0 )
+    return false;
+
+  // loop through all the results
+  for ( p = servinfo; p != NULL; p = p->ai_next )
+  {
+    // creation of socket already done in Initialize()
+    // check, that protocol and socktype fit
+    if ( p->ai_family != nSocketDomain  ||  p->ai_socktype != nSocketType
+         || p->ai_addr->sa_family != nSocketDomain )
+    {
+      continue;
+    }
+
+    // struct sockaddr_in * pOutSin
+    //*pOutSin = *( (struct sockaddr_in *) p->ai_addr );
+
+    // struct in_addr * pOutIpAddress
+    *pOutIpAddress = ( (struct sockaddr_in *)p->ai_addr )->sin_addr;
+
+    freeaddrinfo(servinfo); // all done with this structure
+    return true;
+  }
+
+  freeaddrinfo(servinfo); // all done with this structure
+  return false;
+}
+
+
+bool CSimpleSocket::GetAddrInfo(const char *pAddr, uint16 nPort, struct in_addr * pOutIpAddress )
+{
+  char aServ[64];
+  char * pServ = aServ;
+  struct addrinfo hints, *servinfo, *p;
+  int rv;
+
+  if (m_socket == INVALID_SOCKET)
+  {
+    return false;
+  }
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = m_nSocketDomain;  // AF_INET for IPv4, AF_UNSPEC for any, AF_INET6 to force IPv6
+  switch ( m_nSocketType )
+  {
+  default:
+  case SocketTypeInvalid:
+    return false;
+  case SocketTypeTcp6:
+  case SocketTypeTcp:
+    hints.ai_socktype = SOCK_STREAM;
+    break;
+  case SocketTypeUdp6:
+  case SocketTypeUdp:
+    hints.ai_socktype = SOCK_DGRAM;
+    break;
+  case SocketTypeRaw:
+    hints.ai_socktype = SOCK_RAW;
+    break;
+  }
+
+  if ( nPort )
+    snprintf( aServ, 63, "%d", (int)nPort );
+  else
+    pServ = 0;
+
+  rv = ::getaddrinfo(pAddr, pServ, &hints, &servinfo );
+  if ( rv != 0 )
+  {
+    // gai_strerror(rv);
+    SetSocketError(CSimpleSocket::SocketInvalidAddress);
+    return false;
+  }
+
+  // loop through all the results
+  for ( p = servinfo; p != NULL; p = p->ai_next )
+  {
+    // creation of socket already done in Initialize()
+    // check, that protocol and socktype fit
+    if ( p->ai_family != m_nSocketDomain  ||  p->ai_socktype != m_nSocketType
+         || p->ai_addr->sa_family != m_nSocketDomain )
+    {
+      continue;
+    }
+
+    // struct sockaddr_in * pOutSin
+    //*pOutSin = *( (struct sockaddr_in *) p->ai_addr );
+
+    // struct in_addr * pOutIpAddress
+    *pOutIpAddress = ( (struct sockaddr_in *)p->ai_addr )->sin_addr;
+
+    freeaddrinfo(servinfo); // all done with this structure
+    return true;
+  }
+
+  freeaddrinfo(servinfo); // all done with this structure
+
+  SetSocketError(CSimpleSocket::SocketInvalidAddress);
+  return false;
+}
+
+
 //------------------------------------------------------------------------------
 //
 // ConnectTCP() -
@@ -172,21 +342,9 @@ bool CSimpleSocket::ConnectTCP(const char *pAddr, uint16 nPort)
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
     m_stServerSockaddr.sin_family = AF_INET;
 
-    struct hostent *pHE = GETHOSTBYNAME(pAddr);
-    if (pHE == NULL)
-    {
-#ifdef WIN32
-        TranslateSocketError();
-#else
-        if (h_errno == HOST_NOT_FOUND)
-        {
-            SetSocketError(SocketInvalidAddress);
-        }
-#endif
-        return bRetVal;
-    }
+    if ( ! GetAddrInfo(pAddr, nPort, &stIpAddress) )
+      return bRetVal;
 
-    memcpy(&stIpAddress, pHE->h_addr_list[0], pHE->h_length);
     m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
 
     if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
@@ -260,21 +418,9 @@ bool CSimpleSocket::ConnectUDP(const char *pAddr, uint16 nPort)
     memset(&m_stServerSockaddr, 0, sizeof(m_stServerSockaddr));
     m_stServerSockaddr.sin_family = AF_INET;
 
-    struct hostent *pHE = GETHOSTBYNAME(pAddr);
-    if (pHE == NULL)
-    {
-#ifdef WIN32
-        TranslateSocketError();
-#else
-        if (h_errno == HOST_NOT_FOUND)
-        {
-            SetSocketError(SocketInvalidAddress);
-        }
-#endif
-        return bRetVal;
-    }
+    if ( ! GetAddrInfo(pAddr, nPort, &stIpAddress) )
+      return bRetVal;
 
-    memcpy(&stIpAddress, pHE->h_addr_list[0], pHE->h_length);
     m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
 
     if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
@@ -292,11 +438,8 @@ bool CSimpleSocket::ConnectUDP(const char *pAddr, uint16 nPort)
     m_timer.Initialize();
     m_timer.SetStartTime();
 
-    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
-    {
-        bRetVal = true;
-        m_bPeerHasClosed = false;
-    }
+    bRetVal = true;
+    m_bPeerHasClosed = false;
 
     TranslateSocketError();
 
@@ -340,8 +483,32 @@ bool CSimpleSocket::ConnectRAW(const char *pAddr, uint16 nPort)
         return bRetVal;
     }
 
-    memcpy(&stIpAddress, pHE->h_addr_list[0], pHE->h_length);
-    m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
+    if ( pHE->h_addrtype == AF_INET && (int)sizeof(stIpAddress) >= pHE->h_length )
+    {
+      memcpy(&stIpAddress, pHE->h_addr_list[0], pHE->h_length);
+      m_stServerSockaddr.sin_addr.s_addr = stIpAddress.s_addr;
+    }
+    else
+    {
+#if CHECK_PRINT_RUNTIME_ERR
+      fprintf(stderr, "\nERROR at ConnectRAW(): hostent * result of gethostbyname(\"%s\"): h_addrtype = %s , sizeof(in_addr) = %d < %d = h_length !\n\n"
+              , pAddr
+              , ( pHE->h_addrtype == AF_INET ? "IPv4" : ( pHE->h_addrtype == AF_INET6 ? "IPv6!" : "unknown" ) )
+              , (int)sizeof(stIpAddress)
+              , pHE->h_length
+              );
+      fprintf(stdout, "\nERROR at ConnectRAW(): hostent * result of gethostbyname(\"%s\"): h_addrtype = %s , sizeof(in_addr) = %d < %d = h_length !\n\n"
+              , pAddr
+              , ( pHE->h_addrtype == AF_INET ? "IPv4" : ( pHE->h_addrtype == AF_INET6 ? "IPv6!" : "unknown" ) )
+              , (int)sizeof(stIpAddress)
+              , pHE->h_length
+              );
+      fflush(stdout);
+      CoreDump();
+      assert(0);  // check, when this happens
+#endif
+      memset(&m_stServerSockaddr.sin_addr.s_addr, CSimpleSocket::SocketError, sizeof(m_stServerSockaddr.sin_addr.s_addr));
+    }
 
     if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
     {
@@ -420,6 +587,7 @@ bool CSimpleSocket::Initialize()
 //------------------------------------------------------------------------------
 //
 // Open() - Create a connection to a specified address on a specified port
+//          also see .h
 //
 //------------------------------------------------------------------------------
 bool CSimpleSocket::Open(const char *pAddr, uint16 nPort)
@@ -472,10 +640,14 @@ bool CSimpleSocket::Open(const char *pAddr, uint16 nPort)
     //--------------------------------------------------------------------------
     if (bRetVal)
     {
-        socklen_t nSockLen = sizeof(struct sockaddr);
+        socklen_t nSockLen;
+        if(m_nSocketType != CSimpleSocket::SocketTypeUdp)
+        {
+          nSockLen = sizeof(struct sockaddr);
 
-        memset(&m_stServerSockaddr, 0, nSockLen);
-        getpeername(m_socket, (struct sockaddr *)&m_stServerSockaddr, &nSockLen);
+          memset(&m_stServerSockaddr, 0, nSockLen);
+          getpeername(m_socket, (struct sockaddr *)&m_stServerSockaddr, &nSockLen);
+        }
 
         nSockLen = sizeof(struct sockaddr);
         memset(&m_stClientSockaddr, 0, nSockLen);
@@ -502,7 +674,7 @@ bool CSimpleSocket::BindInterface(const char *pInterface)
     {
         if (pInterface)
         {
-            stInterfaceAddr.s_addr= inet_addr(pInterface);
+            inet_pton(AF_INET, pInterface, &stInterfaceAddr.s_addr);
             if (SETSOCKOPT(m_socket, IPPROTO_IP, IP_MULTICAST_IF, &stInterfaceAddr, sizeof(stInterfaceAddr)) == SocketSuccess)
             {
                 bRetVal = true;
@@ -677,7 +849,7 @@ uint32 CSimpleSocket::GetWindowSize(uint32 nOptionName)
     //-------------------------------------------------------------------------
     // no socket given, return system default allocate our own new socket
     //-------------------------------------------------------------------------
-    if (m_socket != CSimpleSocket::SocketError)
+    if (m_socket != INVALID_SOCKET)
     {
         socklen_t nLen = sizeof(nTcpWinSize);
 
@@ -708,7 +880,7 @@ uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
     //-------------------------------------------------------------------------
     // no socket given, return system default allocate our own new socket
     //-------------------------------------------------------------------------
-    if (m_socket != CSimpleSocket::SocketError)
+    if (m_socket != INVALID_SOCKET)
     {
         if (SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize)) == SocketError)
         {
@@ -775,6 +947,26 @@ bool CSimpleSocket::EnableNagleAlgoritm()
     }
 
     return bRetVal;
+}
+
+
+uint32 CSimpleSocket::GetIPv4AddrInfoStatic( const char *pAddr, CSocketType nSocketType )
+{
+  struct in_addr stIpAddress;
+  bool ret = GetAddrInfoStatic( pAddr, 0, &stIpAddress, nSocketType );
+  if (!ret)
+    return 0;
+  return ntohl(stIpAddress.s_addr);
+}
+
+
+uint32 CSimpleSocket::GetIPv4AddrInfo( const char *pAddr )
+{
+  struct in_addr stIpAddress;
+  bool ret = GetAddrInfo( pAddr, 0, &stIpAddress );
+  if (!ret)
+    return 0;
+  return ntohl(stIpAddress.s_addr);
 }
 
 
@@ -920,7 +1112,7 @@ bool CSimpleSocket::Shutdown(CShutdownMode nShutdown)
 {
     CSocketError nRetVal = SocketEunknown;
 
-    nRetVal = (CSocketError)shutdown(m_socket, CSimpleSocket::Sends);
+    nRetVal = (CSocketError)shutdown(m_socket, nShutdown);
     if (nRetVal == SocketError)
     {
         TranslateSocketError();
@@ -1458,17 +1650,17 @@ int32 CSimpleSocket::SendFile(int32 nOutFd, int32 nInFd, off_t *pOffset, int32 n
 }
 
 
-bool CSimpleSocket::IsSocketValid(void)
+bool CSimpleSocket::IsSocketValid(void) const
 {
 #if PRINT_CLOSE
   if ( m_socket == SocketError )
     fprintf(stderr, "reporting CSimpleSocket::IsSocketValid() == false.\n" );
 #endif
-    return (m_socket != SocketError);
+    return (m_socket != INVALID_SOCKET);
 }
 
 
-bool CSimpleSocket::IsSocketPeerClosed(void)
+bool CSimpleSocket::IsSocketPeerClosed(void) const
 {
 #if PRINT_CLOSE
   if ( m_bPeerHasClosed )
@@ -1503,6 +1695,11 @@ void CSimpleSocket::ClearSystemError(void)
 //------------------------------------------------------------------------------
 void CSimpleSocket::TranslateSocketError(void)
 {
+  // see
+  //   * http://man7.org/linux/man-pages/man3/errno.3.html
+  //   * https://msdn.microsoft.com/en-us/library/windows/desktop/ms740668(v=vs.85).aspx#
+  // for the system's error code's
+  // it's quite difficult to map all of them to some CSocketError!
 #if defined(_LINUX) || defined(_DARWIN)
     int systemErrno = errno;
     switch (systemErrno)
@@ -1559,8 +1756,15 @@ void CSimpleSocket::TranslateSocketError(void)
     case ENOPROTOOPT:
         SetSocketError(CSimpleSocket::SocketConnectionReset);
         break;
+    case EADDRNOTAVAIL:
     case EADDRINUSE:
         SetSocketError(CSimpleSocket::SocketAddressInUse);
+        break;
+    case ESHUTDOWN:
+    case EHOSTUNREACH:
+    case ENETUNREACH:
+    case ENETDOWN:
+        SetSocketError(CSimpleSocket::SocketNetworkError);
         break;
     default:
   #if PRINT_ERRORS
@@ -1623,10 +1827,17 @@ void CSimpleSocket::TranslateSocketError(void)
         SetSocketError(CSimpleSocket::SocketInvalidAddress);
         break;
     case WSAEADDRINUSE:
+    case WSAEADDRNOTAVAIL:
         SetSocketError(CSimpleSocket::SocketAddressInUse);
         break;
     case WSAEFAULT:
         SetSocketError(CSimpleSocket::SocketInvalidPointer);
+        break;
+    case WSAENETDOWN:
+    case WSAENETUNREACH:
+    case WSAENETRESET:
+    case WSAESHUTDOWN:
+        SetSocketError(CSimpleSocket::SocketNetworkError);
         break;
     default:
         SetSocketError(CSimpleSocket::SocketEunknown);
@@ -1684,6 +1895,8 @@ const char *CSimpleSocket::DescribeError(CSocketError err)
             return "Pointer type supplied as argument is invalid.";
         case CSimpleSocket::SocketEunknown:
             return "Unknown error";
+        case CSimpleSocket::SocketNetworkError:
+            return "Network error";
         default:
             return "No such CSimpleSocket error";
     }
