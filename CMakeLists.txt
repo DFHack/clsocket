@@ -44,10 +44,16 @@ elseif(WIN32)
     SET(PROJECT_LIBS Ws2_32.lib)
     if(MINGW)
         # Special MINGW stuff here
+        OPTION(CLSOCKET_OWN_INET_PTON "Use own inet_pton() implementation (required on MINGW)" ON)
+        if(CLSOCKET_OWN_INET_PTON)
+            add_definitions(-DCLSOCKET_OWN_INET_PTON)
+        endif()
         # see https://cmake.org/pipermail/cmake/2012-September/051970.html
         # see http://stackoverflow.com/questions/13768515/how-to-do-static-linking-of-libwinpthread-1-dll-in-mingw
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static -static-libgcc")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++")
+        # looks, the following compiler options produce linker errors. -static, .. options should only be used for linker
+        #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static -static-libgcc")
+        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static -static-libgcc -static-libstdc++")
+        # commenting out upper two CMAKE_C[XX]_FLAG now compiles and links with and without CLSOCKET_SHARED cmake option
         set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "${CMAKE_SHARED_LIBRARY_LINK_C_FLAGS} -static -static-libgcc -s")
         set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS} -static -static-libgcc -static-libstdc++ -s")
     elseif(MSVC)
@@ -75,6 +81,18 @@ else()
     else()
         ADD_LIBRARY(clsocket STATIC ${CLSOCKET_SOURCES})
     endif()
+
+    if(MSVC)
+        # Special MSVC stuff here
+        set(CMAKE_C_FLAGS_RELEASE          "${CMAKE_C_FLAGS_RELEASE}          -MT")
+        set(CMAKE_CXX_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}        -MT")
+        set(CMAKE_C_FLAGS_MINSIZEREL       "${CMAKE_C_FLAGS_MINSIZEREL}       -MT")
+        set(CMAKE_CXX_FLAGS_MINSIZEREL     "${CMAKE_CXX_FLAGS_MINSIZEREL}     -MT")
+        set(CMAKE_C_FLAGS_RELWITHDEBINFO   "${CMAKE_C_FLAGS_RELWITHDEBINFO}   -MT")
+        set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -MT")
+        set(CMAKE_C_FLAGS_DEBUG            "${CMAKE_C_FLAGS_DEBUG}            -MTd")
+        set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}          -MTd")
+    endif()
 endif()
 TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
 
@@ -89,14 +107,18 @@ endif()
 set_target_properties(clsocket PROPERTIES VERSION ${BUILD_VERSION}
                                           SOVERSION ${BUILD_MAJOR})
 
-if(UNIX OR (WIN32 AND MINGW))
+if(UNIX OR (WIN32 OR MINGW))
     OPTION(CLSOCKET_EXAMPLES "Build the examples" OFF)
 
     if(CLSOCKET_EXAMPLES)
-        ADD_EXECUTABLE(clsocket-example examples/RecvAsync.cpp)
-        TARGET_LINK_LIBRARIES(clsocket-example clsocket pthread)
-        if(NOT CLSOCKET_DEP_ONLY)
-            install(TARGETS clsocket-example DESTINATION bin)
+
+        if (NOT MSVC)
+            # pthread not available with MSVC
+            ADD_EXECUTABLE(clsocket-example examples/RecvAsync.cpp)
+            TARGET_LINK_LIBRARIES(clsocket-example clsocket pthread)
+            if(NOT CLSOCKET_DEP_ONLY)
+                install(TARGETS clsocket-example DESTINATION bin)
+            endif()
         endif()
 
         ADD_EXECUTABLE(querydaytime-example examples/QueryDayTime.cpp)

@@ -42,7 +42,10 @@
  *----------------------------------------------------------------------------*/
 #include "PassiveSocket.h"
 
-
+#ifdef CLSOCKET_OWN_INET_PTON
+// implemented in SimpleSocket.cpp
+extern int inet_pton(int af, const char *src, void *dst);
+#endif
 
 CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 {
