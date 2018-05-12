@@ -133,18 +133,16 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
 #ifdef WIN32
     ULONG          inAddr;
 #else
-    int32          nReuse;
     in_addr_t      inAddr;
 
+    int32          nReuse;
     nReuse = IPTOS_LOWDELAY;
-#endif
 
     //--------------------------------------------------------------------------
     // Set the following socket option SO_REUSEADDR.  This will allow the file
     // descriptor to be reused immediately after the socket is closed instead
     // of setting in a TIMED_WAIT state.
     //--------------------------------------------------------------------------
-#ifdef _LINUX
     SETSOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&nReuse, sizeof(int32));
     SETSOCKOPT(m_socket, IPPROTO_TCP, IP_TOS, &nReuse, sizeof(int32));
 #endif
