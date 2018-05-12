@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 
     if ( argc < 3 )
     {
-        fprintf(stderr, "usage: %s <host> <text>\n", argv[0] );
+        fprintf(stderr, "usage: %s <host> <text> [<bind-address> <bind-port>]\n", argv[0] );
         return 10;
     }
 
@@ -20,6 +20,13 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------------------
     socket.Initialize();
 
+    if ( 4 < argc )
+    {
+        unsigned bindPort = atoi(argv[4]);
+        bool ret = socket.Bind( argv[3], uint16(bindPort) );
+        fprintf(stderr, "bind to %s:%u %s\n", argv[3], bindPort, (ret ? "successful":"failed") );
+    }
+
     bool bConnOK = socket.Open( argv[1], 6789 );
     if ( !bConnOK )
     {
@@ -27,11 +34,10 @@ int main(int argc, char **argv)
         return 10;
     }
 
-    fprintf(stderr, "\n%s. Local: %s:%u   Peer: %s:%u\n"
-          , ( socket.IsServerSide() ? "Local is Server" : "Local is Client" )
-          , socket.GetLocalAddr(), (unsigned)socket.GetLocalPort()
-          , socket.GetPeerAddr(), (unsigned)socket.GetPeerPort()
-          );
+    fprintf(stderr, "\nLocal is %s. Local: %s:%u   "
+          , ( socket.IsServerSide() ? "Server" : "Client" )
+          , socket.GetLocalAddr(), (unsigned)socket.GetLocalPort());
+    fprintf(stderr, "Peer: %s:%u\n", socket.GetPeerAddr(), (unsigned)socket.GetPeerPort());
 
     size_t sendSize = strlen( argv[2] );
     socket.Send( argv[2], (int32)sendSize );

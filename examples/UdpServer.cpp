@@ -8,12 +8,27 @@ int main(int argc, char **argv)
     char buffer[ MAX_PACKET ];
     CPassiveSocket passiveSocket( CSimpleSocket::SocketTypeUdp );
 
+    const char * bindAddr = 0;
+    unsigned bindPort = 6789;
+    if ( argc <= 1 )
+        fprintf(stderr, "usage: %s [<bind-address> [<bind-port>]]\n", argv[0] );
+    if ( 1 < argc )
+        bindAddr = argv[1];
+    if ( 2 < argc )
+        bindPort = atoi(argv[2]) & 65535;
+
     //--------------------------------------------------------------------------
     // Initialize our socket object 
     //--------------------------------------------------------------------------
     passiveSocket.Initialize();
-    passiveSocket.Bind( 0, 6789 );  // NULL (not "127.0.0.1") to allow testing with remotes
+    fprintf(stderr, "binding to %s:%u\n", bindAddr, bindPort);
+    passiveSocket.Bind( bindAddr, uint16(bindPort) );   // not "127.0.0.1" to allow testing with remotes
     CSimpleSocket &socket = passiveSocket;
+
+    fprintf(stderr, "\nLocal is %s. Local: %s:%u   "
+          , ( socket.IsServerSide() ? "Server" : "Client" )
+          , socket.GetLocalAddr(), (unsigned)socket.GetLocalPort());
+    fprintf(stderr, "(invalid) Peer: %s:%u\n", socket.GetPeerAddr(), (unsigned)socket.GetPeerPort());
 
     socket.SetReceiveTimeoutMillis(500);
 
@@ -31,11 +46,10 @@ int main(int argc, char **argv)
             fprintf( stderr, "GetNumReceivableBytes() = %d != %d = Receive() !\n", peekRx, rx );
         if (rx > 0)
         {
-            fprintf(stderr, "\n%s. Local: %s:%u   Peer: %s:%u\n"
-                    , ( passiveSocket.IsServerSide() ? "Local is Server" : "Local is Client" )
-                    , passiveSocket.GetLocalAddr(), (unsigned)passiveSocket.GetLocalPort()
-                    , passiveSocket.GetPeerAddr(), (unsigned)passiveSocket.GetPeerPort()
-                    );
+            fprintf(stderr, "\nLocal is %s. Local: %s:%u   "
+                  , ( socket.IsServerSide() ? "Server" : "Client" )
+                  , socket.GetLocalAddr(), (unsigned)socket.GetLocalPort());
+            fprintf(stderr, "Peer: %s:%u\n", socket.GetPeerAddr(), (unsigned)socket.GetPeerPort());
 
             fprintf(stderr, "\nreceived %d bytes:\n", rx );
             for ( int k = 0; k < rx; ++k )

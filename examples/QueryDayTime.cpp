@@ -23,6 +23,11 @@ int main(int argc, char **argv)
     fprintf(stderr, "trying to connect to timeserver %s:%d ..\n", timeServer, PortNo);
     if (socket.Open(timeServer, (uint16)PortNo))
     {
+        fprintf(stderr, "\nLocal is %s. Local: %s:%u   "
+              , ( socket.IsServerSide() ? "Server" : "Client" )
+              , socket.GetLocalAddr(), (unsigned)socket.GetLocalPort());
+        fprintf(stderr, "Peer: %s:%u\n", socket.GetPeerAddr(), (unsigned)socket.GetPeerPort());
+
         //----------------------------------------------------------------------
         // Send a requtest the server requesting the current time.
         //----------------------------------------------------------------------

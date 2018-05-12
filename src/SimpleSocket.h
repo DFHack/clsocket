@@ -316,15 +316,15 @@ public:
 
     inline int32 Send(const char *pBuf, size_t bytesToSend) {
         return Send( (const uint8 *)pBuf, bytesToSend );
-    };
+    }
 
     inline int32 Transmit(const uint8 *pBuf, size_t bytesToSend) {
         return Send( pBuf, bytesToSend );
-    };
+    }
 
     inline int32 Transmit(const char *pBuf, size_t bytesToSend) {
         return Send( (const uint8 *)pBuf, bytesToSend );
-    };
+    }
 
     /// Attempts to send at most nNumItem blocks described by sendVector
     /// to the socket descriptor associated with the socket object.
@@ -491,6 +491,13 @@ public:
     /// @return true if successfully bound to interface
     bool BindInterface(const char *pInterface);
 
+
+    /// Bind socket to a specific interface in general for tcp/udp clients
+    ///  @param pInterface - interface on which to bind.
+    ///  @param nPort - port on which multicast
+    ///  @return true if able to bind to interface.
+    bool Bind(const char *pInterface, uint16 nPort);
+
     /// Gets the timeout value that specifies the maximum number of seconds a
     /// a call to CSimpleSocket::Send waits until it completes.
     /// @return the length of time in seconds
@@ -558,14 +565,20 @@ public:
     };
 
     /// Returns clients Internet host address as a string in standard numbers-and-dots notation.
+    ///   on TCP Server the Client and Peer Address/Port get valid with successful Accept()
+    ///   on UDP Server the Client and Peer Address/Port get valid with successful Receive()
+    /// ATTENTION: return is same static buffer as in inet_ntoa(), GetClientAddr(), GetServerAddr(), GetLocalAddr(), GetPeerAddr()
     ///  @return NULL if invalid
     const char * GetClientAddr() const;
 
     /// Returns the port number on which the client is connected.
+    ///   on TCP Server the Client and Peer Address/Port get valid with successful Accept()
+    ///   on UDP Server the Client and Peer Address/Port get valid with successful Receive()
     ///  @return client port number.
     uint16 GetClientPort() const;
 
     /// Returns server Internet host address as a string in standard numbers-and-dots notation.
+    /// ATTENTION: return is same static buffer as in inet_ntoa(), GetClientAddr(), GetServerAddr(), GetLocalAddr(), GetPeerAddr()
     ///  @return NULL if invalid
     const char * GetServerAddr() const;
 
@@ -577,6 +590,7 @@ public:
     bool IsServerSide() const;
 
     /// Returns local Internet host address as a string in standard numbers-and-dots notation.
+    /// ATTENTION: return is same static buffer as in inet_ntoa(), GetClientAddr(), GetServerAddr(), GetLocalAddr(), GetPeerAddr()
     ///  @return NULL if invalid
     const char * GetLocalAddr() const;
 
@@ -586,10 +600,15 @@ public:
 
 
     /// Returns Peer's Internet host address as a string in standard numbers-and-dots notation.
+    ///   on TCP Server the Client and Peer Address/Port get valid with successful Accept()
+    ///   on UDP Server the Client and Peer Address/Port get valid with successful Receive()
+    /// ATTENTION: return is same static buffer as in inet_ntoa(), GetClientAddr(), GetServerAddr(), GetLocalAddr(), GetPeerAddr()
     ///  @return NULL if invalid
     const char * GetPeerAddr() const;
 
     /// Returns the port number on which the peer is connected.
+    ///   on TCP Server the Client and Peer Address/Port get valid with successful Accept()
+    ///   on UDP Server the Client and Peer Address/Port get valid with successful Receive()
     ///  @return client port number.
     uint16 GetPeerPort() const;
 

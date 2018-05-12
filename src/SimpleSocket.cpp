@@ -256,10 +256,15 @@ CSimpleSocket::CSimpleSocket(CSocketType nType) :
     m_bIsServerSide(false),
     m_bPeerHasClosed(true)
 {
-    SetConnectTimeout(1, 0);    // default timeout for connection
+    memset(&m_stConnectTimeout, 0, sizeof(struct timeval));
     memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
     memset(&m_stSendTimeout, 0, sizeof(struct timeval));
     memset(&m_stLinger, 0, sizeof(struct linger));
+    SetConnectTimeout(1, 0);    // default timeout for connection
+
+    memset(&m_stServerSockaddr, 0, sizeof(struct sockaddr));
+    memset(&m_stClientSockaddr, 0, sizeof(struct sockaddr));
+    memset(&m_stMulticastGroup, 0, sizeof(struct sockaddr));
 
     switch(nType)
     {
@@ -836,6 +841,63 @@ bool CSimpleSocket::Open(const char *pAddr, uint16 nPort)
 
 //------------------------------------------------------------------------------
 //
+// Bind()
+//
+//------------------------------------------------------------------------------
+bool CSimpleSocket::Bind(const char *pInterface, uint16 nPort)
+{
+    bool           bRetVal = false;
+#ifdef WIN32
+    ULONG          inAddr;
+#else
+    in_addr_t      inAddr;
+#endif
+
+    memset(&m_stClientSockaddr,0,sizeof(m_stClientSockaddr));
+    m_stClientSockaddr.sin_family = AF_INET;
+    m_stClientSockaddr.sin_port = htons(nPort);
+
+    //--------------------------------------------------------------------------
+    // If no IP Address (interface ethn) is supplied, or the loop back is
+    // specified then bind to any interface, else bind to specified interface.
+    //--------------------------------------------------------------------------
+    if (pInterface && pInterface[0])
+    {
+      inet_pton(AF_INET, pInterface, &inAddr);
+    }
+    else
+    {
+      inAddr = INADDR_ANY;
+    }
+
+    m_stClientSockaddr.sin_addr.s_addr = inAddr;
+
+    ClearSystemError();
+
+    //--------------------------------------------------------------------------
+    // Bind to the specified port
+    //--------------------------------------------------------------------------
+    if (bind(m_socket, (struct sockaddr *)&m_stClientSockaddr, sizeof(m_stClientSockaddr)) == 0)
+    {
+        bRetVal = true;
+    }
+
+    //--------------------------------------------------------------------------
+    // If there was a socket error then close the socket to clean out the
+    // connection in the backlog.
+    //--------------------------------------------------------------------------
+    TranslateSocketError();
+
+    if (bRetVal == false)
+    {
+        Close();
+    }
+
+    return bRetVal;
+}
+
+//------------------------------------------------------------------------------
+//
 // BindInterface()
 //
 //------------------------------------------------------------------------------
@@ -957,7 +1019,7 @@ const char * CSimpleSocket::GetClientAddr() const
 ///  @return client port number.
 uint16 CSimpleSocket::GetClientPort() const
 {
-    return m_stClientSockaddr.sin_port;
+    return ntohs(m_stClientSockaddr.sin_port);
 }
 
 /// Returns server Internet host address as a string in standard numbers-and-dots notation.
@@ -1204,25 +1266,13 @@ int32 CSimpleSocket::Send(const uint8 *pBuf, size_t bytesToSend)
                 // Check error condition and attempt to resend if call
                 // was interrupted by a signal.
                 //---------------------------------------------------------
-                //                    if (GetMulticast())
-                //                    {
-                //                        do
-                //                        {
-                //                            m_nBytesSent = SENDTO(m_socket, pBuf, bytesToSend, 0, (const sockaddr *)&m_stMulticastGroup,
-                //                                                  sizeof(m_stMulticastGroup));
-                //                            TranslateSocketError();
-                //                        } while (GetSocketError() == CSimpleSocket::SocketInterrupted);
-                //                    }
-                //                    else
+                do
                 {
-                    do
-                    {
-                        m_nBytesSent = SENDTO(m_socket, pBuf, bytesToSend, 0,
-                                              (const sockaddr *)&m_stServerSockaddr,
-                                              sizeof(m_stServerSockaddr));
-                        TranslateSocketError();
-                    } while (GetSocketError() == CSimpleSocket::SocketInterrupted);
-                }
+                    m_nBytesSent = SENDTO(m_socket, pBuf, bytesToSend, 0,
+                                          (const sockaddr *)&m_stServerSockaddr,
+                                          sizeof(m_stServerSockaddr));
+                    TranslateSocketError();
+                } while (GetSocketError() == CSimpleSocket::SocketInterrupted);
 
                 m_timer.SetEndTime();
             }

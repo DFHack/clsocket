@@ -8,16 +8,31 @@ int main(int argc, char **argv)
     CPassiveSocket socket;
     CActiveSocket *pClient = NULL;
 
+    const char * bindAddr = 0;
+    unsigned bindPort = 6789;
+    if ( argc <= 1 )
+        fprintf(stderr, "usage: %s [<bind-address> [<bind-port>]]\n", argv[0] );
+    if ( 1 < argc )
+        bindAddr = argv[1];
+    if ( 2 < argc )
+        bindPort = atoi(argv[2]) & 65535;
+
     //--------------------------------------------------------------------------
     // Initialize our socket object 
     //--------------------------------------------------------------------------
     socket.Initialize();
-    socket.Listen( 0, 6789 ); // NULL (not "127.0.0.1") to allow testing with remotes
+    fprintf(stderr, "binding to %s:%u\n", bindAddr, bindPort);
+    socket.Listen( bindAddr, uint16(bindPort) );    // not "127.0.0.1" to allow testing with remotes
 
     while (true)
     {
         if ((pClient = socket.Accept()) != NULL)
         {
+            fprintf(stderr, "\nLocal is %s. Local: %s:%u   "
+                  , ( pClient->IsServerSide() ? "Server" : "Client" )
+                  , pClient->GetLocalAddr(), (unsigned)pClient->GetLocalPort());
+            fprintf(stderr, "Peer: %s:%u\n", pClient->GetPeerAddr(), (unsigned)pClient->GetPeerPort());
+
             //----------------------------------------------------------------------
             // Receive request from the client.
             //----------------------------------------------------------------------
@@ -27,12 +42,6 @@ int main(int argc, char **argv)
 
             if (pClient->Receive(MAX_PACKET))
             {
-                fprintf(stderr, "\n%s. Local: %s:%u   Peer: %s:%u\n"
-                      , ( pClient->IsServerSide() ? "Local is Server" : "Local is Client" )
-                      , pClient->GetLocalAddr(), (unsigned)pClient->GetLocalPort()
-                      , pClient->GetPeerAddr(), (unsigned)pClient->GetPeerPort()
-                      );
-
                 //------------------------------------------------------------------
                 // Send response to client and close connection to the client.
                 //------------------------------------------------------------------
