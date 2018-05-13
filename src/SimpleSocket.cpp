@@ -1188,6 +1188,8 @@ bool CSimpleSocket::EnableNagleAlgoritm()
 
 uint32 CSimpleSocket::GetIPv4AddrInfoStatic( const char *pAddr, CSocketType nSocketType )
 {
+  if (!pAddr || !pAddr[0])
+    return 0;
   struct in_addr stIpAddress;
   bool ret = GetAddrInfoStatic( pAddr, 0, &stIpAddress, nSocketType );
   if (!ret)
@@ -1198,6 +1200,8 @@ uint32 CSimpleSocket::GetIPv4AddrInfoStatic( const char *pAddr, CSocketType nSoc
 
 uint32 CSimpleSocket::GetIPv4AddrInfo( const char *pAddr )
 {
+  if (!pAddr || !pAddr[0])
+    return 0;
   struct in_addr stIpAddress;
   bool ret = GetAddrInfo( pAddr, 0, &stIpAddress );
   if (!ret)
