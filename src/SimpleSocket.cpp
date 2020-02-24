@@ -966,6 +966,7 @@ void CSimpleSocket::TranslateSocketError(void)
     case ENOMEM:
     case EPROTONOSUPPORT:
     case EPIPE:
+    case EOPNOTSUPP:
         SetSocketError(CSimpleSocket::SocketInvalidSocket);
         break;
     case ECONNREFUSED :
@@ -1000,6 +1001,9 @@ void CSimpleSocket::TranslateSocketError(void)
     case ECONNRESET:
     case ENOPROTOOPT:
         SetSocketError(CSimpleSocket::SocketConnectionReset);
+        break;
+    case EADDRINUSE:
+        SetSocketError(CSimpleSocket::SocketAddressInUse);
         break;
     default:
         SetSocketError(CSimpleSocket::SocketEunknown);
