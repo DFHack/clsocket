@@ -250,6 +250,12 @@ extern "C"
   #define FPRINTF  fprintf
 #endif
 
+#ifdef _MSC_VER
+  #define EXPORT __declspec(dllexport)
+#else
+  #define EXPORT
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -68,7 +68,7 @@
 
 /// Class to abstract socket communications in a cross platform manner.
 /// This class is designed
-class CStatTimer {
+class EXPORT CStatTimer {
 public:
     CStatTimer()
     {
