@@ -99,7 +99,7 @@
 /// - Socket types
 ///  -# CActiveSocket Class
 ///  -# CPassiveSocket Class
-class CSimpleSocket {
+class EXPORT CSimpleSocket {
 public:
     /// Defines the three possible states for shuting down a socket.
     typedef enum
