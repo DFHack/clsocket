@@ -75,12 +75,17 @@ if(CLSOCKET_SHARED)
     else()
         ADD_LIBRARY(clsocket SHARED ${CLSOCKET_SOURCES})
     endif()
+    # linking against shared library requires the symbols
+    target_compile_definitions(clsocket PRIVATE EXPORT_CLSOCKET_SYMBOLS)
+    # have internal symbols hidden by default
+    set_target_properties(clsocket PROPERTIES CXX_VISIBILITY_PRESET hidden)
 else()
     if(CLSOCKET_DEP_ONLY)
         ADD_LIBRARY(clsocket STATIC EXCLUDE_FROM_ALL ${CLSOCKET_SOURCES})
     else()
         ADD_LIBRARY(clsocket STATIC ${CLSOCKET_SOURCES})
     endif()
+    # no need for export symbols with a static library
 
     if(MSVC)
         # Special MSVC stuff here

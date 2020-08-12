@@ -251,10 +251,34 @@ extern "C"
 #endif
 
 #ifdef _MSC_VER
-  #define EXPORT __declspec(dllexport)
-#else
-  #define EXPORT
+  #ifdef EXPORT_CLSOCKET_SYMBOLS
+    #define CLSOCKET_API __declspec(dllexport)
+  #else
+    #define CLSOCKET_API __declspec(dllimport)
+  #endif
+#elif defined(_LINUX) || defined(_DARWIN)
+  #ifdef EXPORT_CLSOCKET_SYMBOLS
+    #define CLSOCKET_API __attribute__ ((visibility("default")))
+  #endif
 #endif
+
+#ifndef CLSOCKET_API
+  #define CLSOCKET_API
+#endif
+
+
+#if defined(_LINUX) || defined(_DARWIN)
+  #ifdef EXPORT_CLSOCKET_SYMBOLS
+    #define CLSOCKET_NO_EXPORT __attribute__ ((visibility("hidden")))
+  #endif
+#endif
+
+#ifndef CLSOCKET_NO_EXPORT
+  #define CLSOCKET_NO_EXPORT
+#endif
+
+
+
 
 #ifdef __cplusplus
 }

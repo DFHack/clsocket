@@ -117,7 +117,7 @@
 /// - Socket types
 ///  -# CActiveSocket Class
 ///  -# CPassiveSocket Class
-class EXPORT CSimpleSocket {
+class CLSOCKET_API CSimpleSocket {
     friend class CPassiveSocket;
 public:
     /// Defines the three possible states for shuting down a socket.
@@ -207,11 +207,11 @@ public:
 
     inline bool CloseForReads() {
         return Shutdown( CSimpleSocket::Receives );
-    };
+    }
 
     inline bool CloseForWrites() {
         return Shutdown( CSimpleSocket::Sends );
-    };
+    }
 
     /// Examine the socket descriptor sets currently owned by the instance of
     /// the socket class (the readfds, writefds, and errorfds parameters) to
@@ -616,30 +616,22 @@ public:
     /// Get the TCP receive buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the receive buffer to twice the value passed.
     ///  @return zero on failure else the number of bytes of the TCP receive buffer window size if successful.
-    uint32 GetReceiveWindowSize() {
-        return GetWindowSize(SO_RCVBUF);
-    };
+    uint32 GetReceiveWindowSize();
 
     /// Get the TCP send buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the send buffer to twice the value passed.
     ///  @return zero on failure else the number of bytes of the TCP receive buffer window size if successful.
-    uint32 GetSendWindowSize() {
-        return GetWindowSize(SO_SNDBUF);
-    };
+    uint32 GetSendWindowSize();
 
     /// Set the TCP receive buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the receive buffer to twice the value passed.
     ///  @return zero on failure else the number of bytes of the TCP send buffer window size if successful.
-    uint32 SetReceiveWindowSize(uint32 nWindowSize) {
-        return SetWindowSize(SO_RCVBUF, nWindowSize);
-    };
+    uint32 SetReceiveWindowSize(uint32 nWindowSize);
 
     /// Set the TCP send buffer window size for the current socket object.
     /// <br><br>\b NOTE: Linux will set the send buffer to twice the value passed.
     ///  @return zero on failure else the number of bytes of the TCP send buffer window size if successful.
-    uint32 SetSendWindowSize(uint32 nWindowSize) {
-        return SetWindowSize(SO_SNDBUF, nWindowSize);
-    };
+    uint32 SetSendWindowSize(uint32 nWindowSize);
 
     /// Disable the Nagle algorithm (Set TCP_NODELAY to true)
     /// @return false if failed to set socket option otherwise return true;
@@ -672,11 +664,11 @@ protected:
 private:
     /// Generic function used to get the send/receive window size
     ///  @return zero on failure else the number of bytes of the TCP window size if successful.
-    uint32 GetWindowSize(uint32 nOptionName);
+    CLSOCKET_NO_EXPORT uint32 GetWindowSize(uint32 nOptionName);
 
     /// Generic function used to set the send/receive window size
     ///  @return zero on failure else the number of bytes of the TCP window size if successful.
-    uint32 SetWindowSize(uint32 nOptionName, uint32 nWindowSize);
+    CLSOCKET_NO_EXPORT uint32 SetWindowSize(uint32 nOptionName, uint32 nWindowSize);
 
 
     /// Attempts to send at most nNumItem blocks described by sendVector
@@ -688,29 +680,29 @@ private:
     /// @return number of bytes actually sent, return of zero means the
     /// connection has been shutdown on the other side, and a return of -1
     /// means that an error has occurred.
-    int32 Writev(const struct iovec *pVector, size_t nCount);
+    CLSOCKET_NO_EXPORT int32 Writev(const struct iovec *pVector, size_t nCount);
 
     /// Flush the socket descriptor owned by the object.
     /// @return true data was successfully sent, else return false;
-    bool Flush();
+    CLSOCKET_NO_EXPORT bool Flush();
 
-    CSimpleSocket *operator=(CSimpleSocket &socket);
+    CLSOCKET_NO_EXPORT CSimpleSocket *operator=(CSimpleSocket &socket);
 
     static bool GetAddrInfoStatic(const char *pAddr, uint16 nPort, struct in_addr * pOutIpAddress, CSocketType nSocketType = SocketTypeTcp );
 
-    bool GetAddrInfo(const char *pAddr, uint16 nPort, struct in_addr * pOutIpAddress );
+    CLSOCKET_NO_EXPORT bool GetAddrInfo(const char *pAddr, uint16 nPort, struct in_addr * pOutIpAddress );
 
     /// Utility function used to create a TCP connection, called from Open().
     ///  @return true if successful connection made, otherwise false.
-    bool ConnectTCP(const char *pAddr, uint16 nPort);
+    CLSOCKET_NO_EXPORT bool ConnectTCP(const char *pAddr, uint16 nPort);
 
     /// Utility function used to create a UDP connection, called from Open().
     ///  @return true if successful connection made, otherwise false.
-    bool ConnectUDP(const char *pAddr, uint16 nPort);
+    CLSOCKET_NO_EXPORT bool ConnectUDP(const char *pAddr, uint16 nPort);
 
     /// Utility function used to create a RAW connection, called from Open().
     ///  @return true if successful connection made, otherwise false.
-    bool ConnectRAW(const char *pAddr, uint16 nPort);
+    CLSOCKET_NO_EXPORT bool ConnectRAW(const char *pAddr, uint16 nPort);
 
 protected:
     SOCKET               m_socket;            /// socket handle

@@ -1072,6 +1072,26 @@ uint16 CSimpleSocket::GetPeerPort() const
   return (m_bIsServerSide) ? GetClientPort() : GetServerPort();
 }
 
+uint32 CSimpleSocket::GetReceiveWindowSize()
+{
+    return GetWindowSize(SO_RCVBUF);
+}
+
+uint32 CSimpleSocket::GetSendWindowSize()
+{
+    return GetWindowSize(SO_SNDBUF);
+}
+
+uint32 CSimpleSocket::SetReceiveWindowSize(uint32 nWindowSize)
+{
+    return SetWindowSize(SO_RCVBUF, nWindowSize);
+}
+
+uint32 CSimpleSocket::SetSendWindowSize(uint32 nWindowSize)
+{
+    return SetWindowSize(SO_SNDBUF, nWindowSize);
+}
+
 
 //------------------------------------------------------------------------------
 //
