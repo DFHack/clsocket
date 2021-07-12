@@ -48,7 +48,7 @@ CSimpleSocket::CSimpleSocket(CSocketType nType) :
     m_pBuffer(NULL), m_nBufferSize(0), m_nSocketDomain(AF_INET),
     m_nSocketType(SocketTypeInvalid), m_nBytesReceived(-1),
     m_nBytesSent(-1), m_nFlags(0),
-    m_bIsBlocking(true)
+    m_bIsBlocking(true), m_bIsMulticast(false)
 {
     SetConnectTimeout(1, 0);
     memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
