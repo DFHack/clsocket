@@ -499,7 +499,7 @@ bool CSimpleSocket::Shutdown(CShutdownMode nShutdown)
 {
     CSocketError nRetVal = SocketEunknown;
 
-    nRetVal = (CSocketError)shutdown(m_socket, CSimpleSocket::Sends);
+    nRetVal = (CSocketError)shutdown(m_socket, nShutdown);
     TranslateSocketError();
 
     return (nRetVal == CSimpleSocket::SocketSuccess) ? true: false;
