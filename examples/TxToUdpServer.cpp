@@ -11,7 +11,8 @@ int main(int argc, char **argv)
 
     if ( argc < 3 )
     {
-        fprintf(stderr, "usage: %s <host> <text> [<bind-address> <bind-port>]\n", argv[0] );
+        fprintf(stderr, "usage: %s <host> <text> [-m [<ttl>] | <bind-address> <bind-port>]\n", argv[0] );
+        fprintf(stderr, "  -m : activate multicast on socket\n");
         return 10;
     }
 
@@ -32,6 +33,13 @@ int main(int argc, char **argv)
     {
         fprintf(stderr, "error connecting to '%s'!\n", argv[1] );
         return 10;
+    }
+
+    if ( 3 < argc && !strcmp(argv[3], "-m") )
+    {
+        uint8 multicastTTL = ( 4 < argc ) ? atoi(argv[4]) : 1;
+        bool ret = socket.SetMulticast(true, 3);
+        fprintf(stderr, "Setting Multicast with TTL 3 %s\n", ret ? "was successful" : "failed");
     }
 
     fprintf(stderr, "\nLocal is %s. Local: %s:%u   "

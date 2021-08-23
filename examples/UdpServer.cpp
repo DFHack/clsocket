@@ -9,20 +9,33 @@ int main(int argc, char **argv)
     CPassiveSocket passiveSocket( CSimpleSocket::SocketTypeUdp );
 
     const char * bindAddr = 0;
+    const char * multicastGroup = 0;
     unsigned bindPort = 6789;
+    bool bindRet;
+
     if ( argc <= 1 )
-        fprintf(stderr, "usage: %s [<bind-address> [<bind-port>]]\n", argv[0] );
+    {
+        fprintf(stderr, "usage: %s [<bind-address> [<bind-port> [<multicast-group-ip>]]]\n", argv[0] );
+        fprintf(stderr, "  do not use <bind-address> '127.0.0.1' if you want to accept reception from remotes\n");
+        fprintf(stderr, "  suggestion for <multicast-group-ip>: 224.0.0.1\n");
+    }
     if ( 1 < argc )
         bindAddr = argv[1];
     if ( 2 < argc )
         bindPort = atoi(argv[2]) & 65535;
+    if ( 3 < argc )
+        multicastGroup = argv[3];
 
     //--------------------------------------------------------------------------
     // Initialize our socket object 
     //--------------------------------------------------------------------------
     passiveSocket.Initialize();
-    fprintf(stderr, "binding to %s:%u\n", bindAddr, bindPort);
-    passiveSocket.Bind( bindAddr, uint16(bindPort) );   // not "127.0.0.1" to allow testing with remotes
+    if (!multicastGroup)
+        fprintf(stderr, "binding to %s:%u\n", bindAddr, bindPort);
+    else
+        fprintf(stderr, "binding to %s:%u for multicast-group %s\n", bindAddr, bindPort, multicastGroup);
+    bindRet = passiveSocket.BindMulticast( bindAddr, multicastGroup, uint16(bindPort) );
+    fprintf(stderr, "bind %s\n", bindRet ? "was successful" : "failed");
     CSimpleSocket &socket = passiveSocket;
 
     fprintf(stderr, "\nLocal is %s. Local: %s:%u   "
