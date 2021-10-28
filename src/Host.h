@@ -251,7 +251,9 @@ extern "C"
 #endif
 
 #ifdef _MSC_VER
-  #ifdef EXPORT_CLSOCKET_SYMBOLS
+  #ifdef CLSOCKET_STATIC_LIB
+    #define CLSOCKET_API
+  #elif defined(EXPORT_CLSOCKET_SYMBOLS)
     #define CLSOCKET_API __declspec(dllexport)
   #else
     #define CLSOCKET_API __declspec(dllimport)
