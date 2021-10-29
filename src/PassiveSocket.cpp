@@ -42,11 +42,22 @@
  *----------------------------------------------------------------------------*/
 #include "PassiveSocket.h"
 
-
+#ifdef CLSOCKET_OWN_INET_PTON
+// implemented in SimpleSocket.cpp
+extern int inet_pton(int af, const char *src, void *dst);
+#endif
 
 CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 {
+  // PassiveSocket is intended for "Server" purpose
+  m_bIsServerSide = true;
 }
+
+CPassiveSocket::~CPassiveSocket()
+{
+    Close();
+}
+
 
 bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort)
 {
@@ -70,34 +81,53 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
     // If no IP Address (interface ethn) is supplied, or the loop back is
     // specified then bind to any interface, else bind to specified interface.
     //--------------------------------------------------------------------------
-    if ((pInterface == NULL) || (!strlen(pInterface)))
+    if (pInterface && pInterface[0])
     {
-        m_stMulticastGroup.sin_addr.s_addr = htonl(INADDR_ANY);
+      inet_pton(AF_INET, pInterface, &inAddr);
     }
     else
     {
-        if ((inAddr = inet_addr(pInterface)) != INADDR_NONE)
-        {
-            m_stMulticastGroup.sin_addr.s_addr = inAddr;
-        }
+      inAddr = INADDR_ANY;
     }
+
+    if (pGroup && pGroup[0] != 0)
+    {
+      m_stMulticastGroup.sin_addr.s_addr = htonl(INADDR_ANY);
+    }
+    else
+    {
+      m_stMulticastGroup.sin_addr.s_addr = inAddr;
+    }
+
+    // multicast address/port is the server
+    memcpy(&m_stServerSockaddr,&m_stMulticastGroup,sizeof(m_stServerSockaddr));
+    ClearSystemError();
 
     //--------------------------------------------------------------------------
     // Bind to the specified port
     //--------------------------------------------------------------------------
+    m_bIsServerSide = true;
     if (bind(m_socket, (struct sockaddr *)&m_stMulticastGroup, sizeof(m_stMulticastGroup)) == 0)
     {
-        //----------------------------------------------------------------------
-        // Join the multicast group
-        //----------------------------------------------------------------------
-        m_stMulticastRequest.imr_multiaddr.s_addr = inet_addr(pGroup);
-        m_stMulticastRequest.imr_interface.s_addr = m_stMulticastGroup.sin_addr.s_addr;
-
-        if (SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                       (void *)&m_stMulticastRequest,
-                       sizeof(m_stMulticastRequest)) == CSimpleSocket::SocketSuccess)
+        if ( pGroup && pGroup[0] != 0 )
         {
-            bRetVal = true;
+            //----------------------------------------------------------------------
+            // Join the multicast group
+            //----------------------------------------------------------------------
+            inet_pton(AF_INET, pGroup, &m_stMulticastRequest.imr_multiaddr.s_addr);
+            m_stMulticastRequest.imr_interface.s_addr = inAddr;
+
+            if ( SETSOCKOPT(m_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                                      (void *)&m_stMulticastRequest,
+                                      sizeof(m_stMulticastRequest)) == CSimpleSocket::SocketSuccess)
+            {
+                bRetVal = true;
+            }
+        }
+        else
+        {
+          // all OK, if we shall not join to a group
+          bRetVal = true;
         }
 
         m_timer.SetEndTime();
@@ -124,11 +154,15 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
 
 //------------------------------------------------------------------------------
 //
-// Listen() -
+// Listen() - Create a listening socket (server) at local ip address 'x.x.x.x' or 'localhost'
+//            waiting for an incoming connection from client(s)
+// also see .h
 //
 //------------------------------------------------------------------------------
 bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBacklog)
 {
+    ClearSystemError();
+
     bool           bRetVal = false;
 #ifdef WIN32
     ULONG          inAddr;
@@ -161,7 +195,8 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
     }
     else
     {
-        if ((inAddr = inet_addr(pAddr)) != INADDR_NONE)
+        inet_pton(AF_INET, pAddr, &inAddr);
+        if (inAddr != INADDR_NONE)
         {
             m_stServerSockaddr.sin_addr.s_addr = inAddr;
         }
@@ -173,6 +208,7 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
     //--------------------------------------------------------------------------
     // Bind to the specified port
     //--------------------------------------------------------------------------
+    m_bIsServerSide = true;
     if (bind(m_socket, (struct sockaddr *)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
     {
         if (m_nSocketType == CSimpleSocket::SocketTypeTcp)
@@ -212,10 +248,10 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
 // Accept() -
 //
 //------------------------------------------------------------------------------
-CActiveSocket *CPassiveSocket::Accept()
+CSimpleSocket *CPassiveSocket::Accept()
 {
     uint32         nSockLen;
-    CActiveSocket *pClientSocket = NULL;
+    CSimpleSocket *pClientSocket = NULL;
     SOCKET         socket = CSimpleSocket::SocketError;
 
     if (m_nSocketType != CSimpleSocket::SocketTypeTcp)
@@ -224,58 +260,53 @@ CActiveSocket *CPassiveSocket::Accept()
         return pClientSocket;
     }
 
-    pClientSocket = new CActiveSocket();
-
     //--------------------------------------------------------------------------
     // Wait for incoming connection.
     //--------------------------------------------------------------------------
-    if (pClientSocket != NULL)
+    CSocketError socketErrno = SocketSuccess;
+
+    m_timer.Initialize();
+    m_timer.SetStartTime();
+
+    nSockLen = sizeof(m_stClientSockaddr);
+
+    ClearSystemError();
+
+    do
     {
-        CSocketError socketErrno = SocketSuccess;
+        errno = 0;
+        socket = accept(m_socket, (struct sockaddr *)&m_stClientSockaddr, (socklen_t *)&nSockLen);
 
-        m_timer.Initialize();
-        m_timer.SetStartTime();
-
-        nSockLen = sizeof(m_stClientSockaddr);
-
-        do
+        if (socket != INVALID_SOCKET)
         {
-            errno = 0;
-            socket = accept(m_socket, (struct sockaddr *)&m_stClientSockaddr, (socklen_t *)&nSockLen);
+            pClientSocket = new CSimpleSocket();
+            if ( !pClientSocket )
+              break;
 
-            if (socket != -1)
-            {
-                pClientSocket->SetSocketHandle(socket);
-                pClientSocket->TranslateSocketError();
-                socketErrno = pClientSocket->GetSocketError();
-                socklen_t nSockLen = sizeof(struct sockaddr);
+            pClientSocket->SetSocketHandle(socket);
+            pClientSocket->TranslateSocketError();
+            socketErrno = pClientSocket->GetSocketError();
+            socklen_t nSockLen = sizeof(struct sockaddr);
 
-                //-------------------------------------------------------------
-                // Store client and server IP and port information for this
-                // connection.
-                //-------------------------------------------------------------
-                getpeername(m_socket, (struct sockaddr *)&pClientSocket->m_stClientSockaddr, &nSockLen);
-                memcpy((void *)&pClientSocket->m_stClientSockaddr, (void *)&m_stClientSockaddr, nSockLen);
+            //-------------------------------------------------------------
+            // Store client and server IP and port information for this
+            // connection.
+            //-------------------------------------------------------------
+            getpeername(m_socket, (struct sockaddr *)&pClientSocket->m_stClientSockaddr, &nSockLen);
+            memcpy((void *)&pClientSocket->m_stClientSockaddr, (void *)&m_stClientSockaddr, nSockLen);
 
-                memset(&pClientSocket->m_stServerSockaddr, 0, nSockLen);
-                getsockname(m_socket, (struct sockaddr *)&pClientSocket->m_stServerSockaddr, &nSockLen);
-            }
-            else
-            {
-                TranslateSocketError();
-                socketErrno = GetSocketError();
-            }
-
-        } while (socketErrno == CSimpleSocket::SocketInterrupted);
-
-        m_timer.SetEndTime();
-
-        if (socketErrno != CSimpleSocket::SocketSuccess)
-        {
-            delete pClientSocket;
-            pClientSocket = NULL;
+            memset(&pClientSocket->m_stServerSockaddr, 0, nSockLen);
+            getsockname(m_socket, (struct sockaddr *)&pClientSocket->m_stServerSockaddr, &nSockLen);
         }
-    }
+        else
+        {
+            TranslateSocketError();
+            socketErrno = GetSocketError();
+        }
+
+    } while (socketErrno == CSimpleSocket::SocketInterrupted);
+
+    m_timer.SetEndTime();
 
     return pClientSocket;
 }
@@ -319,6 +350,10 @@ int32 CPassiveSocket::Send(const uint8 *pBuf, size_t bytesToSend)
     case CSimpleSocket::SocketTypeTcp:
         CSimpleSocket::Send(pBuf, bytesToSend);
         break;
+    case CSimpleSocket::SocketTypeInvalid:
+    case CSimpleSocket::SocketTypeTcp6:
+    case CSimpleSocket::SocketTypeUdp6:
+    case CSimpleSocket::SocketTypeRaw:
     default:
         SetSocketError(SocketProtocolError);
         break;

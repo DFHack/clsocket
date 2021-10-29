@@ -43,7 +43,7 @@ void *CreateTCPEchoServer(void *param)
             }
         }
 
-        sleep(100);
+        sleep(1);
 
         delete pClient;
     }
@@ -78,23 +78,41 @@ int main(int argc, char **argv)
             int numBytes = -1;
             int bytesReceived = 0;
 
-            client.Select();
+            client.WaitUntilReadable(100);  // wait up to 100 ms
 
-            while (bytesReceived != strlen(TEST_PACKET))
+            //while (bytesReceived != strlen(TEST_PACKET))
+            while ( numBytes != 0 )   // Receive() until socket gets closed
             {
+                int32 peekRx = client.GetNumReceivableBytes();
+
                 numBytes = client.Receive(MAX_PACKET);
+
+                if ( peekRx != numBytes && !( peekRx == 0 && numBytes < 0 ) )
+                  fprintf( stderr, "\nGetNumReceivableBytes() = %d != %d = Receive() !\n", peekRx, numBytes );
 
                 if (numBytes > 0)
                 {
                     bytesReceived += numBytes;
                     memset(result, 0, 1024);
                     memcpy(result, client.GetData(), numBytes);
-                    printf("received %d bytes: '%s'\n", numBytes, result);
+                    printf("\nreceived %d bytes: '%s'\n", numBytes, result);
                 }
+                else if ( CSimpleSocket::SocketEwouldblock == client.GetSocketError() )
+                    fprintf(stderr, ".");
+                else if ( !client.IsNonblocking() && CSimpleSocket::SocketTimedout == client.GetSocketError() )
+                      fprintf(stderr, "w");
                 else
                 {
-                    printf("Received %d bytes\n", numBytes);
+                    printf("\nreceived %d bytes\n", numBytes);
+
+                    fprintf(stderr, "Error: %s\n", client.DescribeError() );
+                    fprintf(stderr, "Error: %s, code %d\n"
+                            , ( client.IsNonblocking() ? "NonBlocking socket" : "Blocking socket" )
+                            , (int) client.GetSocketError()
+                            );
                 }
+
+                client.WaitUntilReadable(100);  // wait up to 100 ms
             }
         }
     }

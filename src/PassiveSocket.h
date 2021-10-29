@@ -52,25 +52,23 @@
 /// in a similar fashion.  The big difference is that the method
 /// CPassiveSocket::Accept should not be called on the latter two socket
 /// types.
-class EXPORT CPassiveSocket : public CSimpleSocket {
+class CLSOCKET_API CPassiveSocket : public CSimpleSocket {
 public:
     CPassiveSocket(CSocketType type = SocketTypeTcp);
-    virtual ~CPassiveSocket() {
-        Close();
-    };
+    virtual ~CPassiveSocket();
 
     /// Extracts the first connection request on the queue of pending
     /// connections and creates a newly connected socket.  Used with
     /// CSocketType CSimpleSocket::SocketTypeTcp.  It is the responsibility of
     /// the caller to delete the returned object when finished.
-    ///  @return if successful a pointer to a newly created CActiveSocket object
+    ///  @return if successful a pointer to a newly created CSimpleSocket object
     ///          will be returned and the internal error condition of the CPassiveSocket
     ///          object will be CPassiveSocket::SocketSuccess.  If an error condition was encountered
     ///          the NULL will be returned and one of the following error conditions will be set:
     ///    CPassiveSocket::SocketEwouldblock, CPassiveSocket::SocketInvalidSocket,
     ///    CPassiveSocket::SocketConnectionAborted, CPassiveSocket::SocketInterrupted
     ///    CPassiveSocket::SocketProtocolError, CPassiveSocket::SocketFirewallError
-    virtual CActiveSocket *Accept(void);
+    virtual CSimpleSocket *Accept(void);
 
     /// Bind to a multicast group on  a specified interface, multicast group, and port
     ///
@@ -79,12 +77,28 @@ public:
     ///  @param nPort - port on which multicast
     ///  @return true if able to bind to interface and multicast group.
     ///      If not successful, the false is returned and one of the following error
-    ///      condiitions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
+    ///      conditions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
     ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
     ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
     bool BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort);
 
-    /// Create a listening socket at local ip address 'x.x.x.x' or 'localhost'
+    /// Bind to a specified interface and port
+    ///
+    ///  @param pInterface - interface on which to bind.
+    ///  @param nPort - port on which multicast
+    ///  @return true if able to bind to interface.
+    ///      If not successful, the false is returned and one of the following error
+    ///      conditions will be set: CPassiveSocket::SocketAddressInUse, CPassiveSocket::SocketProtocolError,
+    ///      CPassiveSocket::SocketInvalidSocket.  The following socket errors are for Linux/Unix
+    ///      derived systems only: CPassiveSocket::SocketInvalidSocketBuffer
+    inline bool Bind(const char *pInterface, uint16 nPort)
+    {
+        const char *pNoGroup = 0;
+        return BindMulticast(pInterface, pNoGroup, nPort);
+    }
+
+    /// Create a listening socket (server) at local ip address 'x.x.x.x' or 'localhost'
+    ///   waiting for an incoming connection from client(s)
     /// if pAddr is NULL on port nPort.
     ///
     ///  @param pAddr specifies the IP address on which to listen.
@@ -109,7 +123,7 @@ public:
     /// CPassiveSocket::SocketProtocolError, CPassiveSocket::SocketNotconnected
     /// <br>\b Note: This function is used only for a socket of type
     /// CSimpleSocket::SocketTypeUdp
-    virtual int32 Send(const uint8 *pBuf, size_t bytesToSend);
+    virtual int32 Send(const uint8 *pBuf, size_t bytesToSend) CLSOCKET_OVERRIDE;
 
 private:
     struct ip_mreq  m_stMulticastRequest;   /// group address for multicast

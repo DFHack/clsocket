@@ -3,10 +3,22 @@
 
 #define MAX_PACKET 4096
 
+
+#ifdef WIN32
+#include <windows.h>
+
+  static void sleep( unsigned int seconds )
+  {
+    Sleep( seconds * 1000 );
+  }
+#elif defined(_LINUX) || defined (_DARWIN)
+  #include <unistd.h>
+#endif
+
 int main(int argc, char **argv)
 {
     CPassiveSocket socket;
-    CActiveSocket *pClient = NULL;
+    CSimpleSocket *pClient = NULL;
 
     const char * bindAddr = 0;
     unsigned bindPort = 6789;
@@ -36,26 +48,20 @@ int main(int argc, char **argv)
             //----------------------------------------------------------------------
             // Receive request from the client.
             //----------------------------------------------------------------------
-
-            pClient->WaitUntilReadable(100);
-            int32 peekRx = pClient->GetNumReceivableBytes();
-
             if (pClient->Receive(MAX_PACKET))
             {
                 //------------------------------------------------------------------
                 // Send response to client and close connection to the client.
                 //------------------------------------------------------------------
                 int32 rx = pClient->GetBytesReceived();
-
-                if ( peekRx != rx && !( peekRx == 0 && rx < 0 ) )
-                    fprintf( stderr, "GetNumReceivableBytes() = %d != %d = Receive() !\n", peekRx, rx );
-
                 uint8 *txt = pClient->GetData();
-                pClient->Send( txt, rx );
-                fprintf(stderr, "received and sent %d bytes:\n", rx );
+                fprintf(stderr, "received %d bytes:\n", rx );
                 for ( int k = 0; k < rx; ++k )
                     fprintf(stderr, "%c", txt[k]);
                 fprintf(stderr, "\n");
+                sleep(5);
+                pClient->Send( txt, rx );
+                fprintf(stderr, "sent back after 5 seconds\n" );
                 pClient->Close();
             }
 
