@@ -7,9 +7,7 @@ set(BUILD_MINOR "4")
 set(BUILD_VERSION "3")
 set(BUILD_VERSION ${BUILD_MAJOR}.${BUILD_MINOR}.${BUILD_VERSION})
 
-include_directories(src)
-
-SET(CLSOCKET_HEADERS
+set(CLSOCKET_HEADERS
 src/ActiveSocket.h
 src/Host.h
 src/PassiveSocket.h
@@ -17,87 +15,53 @@ src/SimpleSocket.h
 src/StatTimer.h
 )
 
-SET(CLSOCKET_SOURCES
+set(CLSOCKET_SOURCES
 src/SimpleSocket.cpp
 src/ActiveSocket.cpp
 src/PassiveSocket.cpp
 )
 
-# mark headers as headers...
-SET_SOURCE_FILES_PROPERTIES( ${CLSOCKET_HEADERS} PROPERTIES HEADER_FILE_ONLY TRUE )
-# append to sources so that dependency checks work on headers
-LIST(APPEND CLSOCKET_SOURCES ${CLSOCKET_HEADERS})
-
-# OS and compiler checks. 
-if(UNIX)
-    # linux / normal unix
-    add_definitions(-D_LINUX)
-    if(CYGWIN)
-        # Special Cygwin stuff here
-    elseif(APPLE)
-        # Special Apple stuff here
-        remove_definitions(-D_LINUX)
-        add_definitions(-D_DARWIN)
-    endif()
-elseif(WIN32)
-    add_definitions(-DWIN32)
-    SET(PROJECT_LIBS Ws2_32.lib)
-    if(MINGW)
-        # Special MINGW stuff here
-    elseif(MSVC)
-        # Special MSVC stuff here
-        add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
-    else()
-        # No idea what it is, but there's a good chance it's too weird.
-        MESSAGE( FATAL_ERROR "Using unknown WIN32 compiler... NOT. Please add to build system." )
-    endif()
+option(BUILD_SHARED_LIBS "Build libs as shared" ON)
+if(DEFINED CLSOCKET_SHARED)
+    message(FATAL_ERROR "The CLSOCKET_SHARED option is deprecated, instead use BUILD_SHARED_LIBS.")
 endif()
-
-OPTION(CLSOCKET_SHARED "Build clsocket lib as shared." ON)
-OPTION(CLSOCKET_DEP_ONLY "Build for use inside other CMake projects as dependency." OFF)
+if(DEFINED CLSOCKET_DEP_ONLY)
+    message(FATAL_ERROR "The CLSOCKET_DEP_ONLY option is deprecated, instead use add_subdirectory() with EXCLUDE_FROM_ALL.")
+endif()
 
 # make the lib
-if(CLSOCKET_SHARED)
-    if(CLSOCKET_DEP_ONLY)
-        ADD_LIBRARY(clsocket SHARED EXCLUDE_FROM_ALL ${CLSOCKET_SOURCES})
-    else()
-        ADD_LIBRARY(clsocket SHARED ${CLSOCKET_SOURCES})
-    endif()
-else()
-    if(CLSOCKET_DEP_ONLY)
-        ADD_LIBRARY(clsocket STATIC EXCLUDE_FROM_ALL ${CLSOCKET_SOURCES})
-    else()
-        ADD_LIBRARY(clsocket STATIC ${CLSOCKET_SOURCES})
-    endif()
+# add headers so that they appear in IDEs
+add_library(clsocket ${CLSOCKET_SOURCES} ${CLSOCKET_HEADERS})
+if(WIN32)
+    add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
+    target_link_libraries(clsocket PRIVATE Ws2_32)
 endif()
-TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
+# target_include_directories was added in 2.8.11
+set_target_properties(clsocket PROPERTIES
+    INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/src
+    INTERFACE_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/src
+)
 
 # install into configured prefix
-if(NOT CLSOCKET_DEP_ONLY)
-    install(TARGETS clsocket ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
-    install(FILES ${CLSOCKET_HEADERS} DESTINATION include)
-else()
-
-endif()
+install(TARGETS clsocket DESTINATION lib)
+install(FILES ${CLSOCKET_HEADERS} DESTINATION include)
 
 set_target_properties(clsocket PROPERTIES VERSION ${BUILD_VERSION}
                                           SOVERSION ${BUILD_MAJOR})
 
 if(UNIX)
-    OPTION(CLSOCKET_EXAMPLES "Build the examples" OFF)
+    option(CLSOCKET_EXAMPLES "Build the examples" OFF)
 
     if(CLSOCKET_EXAMPLES)
-        ADD_EXECUTABLE(clsocket-example examples/RecvAsync.cpp)
-        TARGET_LINK_LIBRARIES(clsocket-example clsocket pthread)
-        if(NOT CLSOCKET_DEP_ONLY)
-            install(TARGETS clsocket-example DESTINATION bin)
-        endif()
+        add_executable(clsocket-example examples/RecvAsync.cpp)
+        target_link_libraries(clsocket-example clsocket pthread)
+        install(TARGETS clsocket-example DESTINATION bin)
 
-        ADD_EXECUTABLE(querydaytime-example examples/QueryDayTime.cpp)
-        TARGET_LINK_LIBRARIES(querydaytime-example clsocket)
+        add_executable(querydaytime-example examples/QueryDayTime.cpp)
+        target_link_libraries(querydaytime-example clsocket)
 
-        ADD_EXECUTABLE(echoserver-example examples/EchoServer.cpp)
-        TARGET_LINK_LIBRARIES(echoserver-example clsocket)
+        add_executable(echoserver-example examples/EchoServer.cpp)
+        target_link_libraries(echoserver-example clsocket)
     endif()
 endif()
 

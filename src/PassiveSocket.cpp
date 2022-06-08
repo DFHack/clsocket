@@ -51,7 +51,7 @@ CPassiveSocket::CPassiveSocket(CSocketType nType) : CSimpleSocket(nType)
 bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, uint16 nPort)
 {
     bool           bRetVal = false;
-#ifdef WIN32
+#ifdef _WIN32
     ULONG          inAddr;
 #else
     in_addr_t      inAddr;
@@ -130,7 +130,7 @@ bool CPassiveSocket::BindMulticast(const char *pInterface, const char *pGroup, u
 bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBacklog)
 {
     bool           bRetVal = false;
-#ifdef WIN32
+#ifdef _WIN32
     ULONG          inAddr;
 #else
     in_addr_t      inAddr;

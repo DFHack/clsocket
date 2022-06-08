@@ -21,12 +21,9 @@ This is a very small library and is very easy to build and configure.  To build 
 make sure you are logged in as a user who has access to the recommend GNU installation 
 directories. Then type
 
-make -BUILD=Release && make install
+cmake -DCMAKE_BUILD_TYPE=Release && make && make install
 
 That is it now you are off and running.
-
-NOTE: When using the library with WINDOWS you must define _WIN32 and when using with LINUX
-      you must define _LINUX.
 
 ------------------------------------------------------------------------------------------
 * SimpleSocket Class Overview
