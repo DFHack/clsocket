@@ -51,7 +51,7 @@ class CPassiveSocket;
 /// An active socket is used to create a socket which connects to a server.
 /// This type of object would be used when an application needs to send/receive
 /// data from a server.
-class CActiveSocket : public CSimpleSocket {
+class EXPORT CActiveSocket : public CSimpleSocket {
 public:
     friend class CPassiveSocket;
 

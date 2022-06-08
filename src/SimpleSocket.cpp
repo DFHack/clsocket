@@ -48,7 +48,7 @@ CSimpleSocket::CSimpleSocket(CSocketType nType) :
     m_pBuffer(NULL), m_nBufferSize(0), m_nSocketDomain(AF_INET),
     m_nSocketType(SocketTypeInvalid), m_nBytesReceived(-1),
     m_nBytesSent(-1), m_nFlags(0),
-    m_bIsBlocking(true)
+    m_bIsBlocking(true), m_bIsMulticast(false)
 {
     SetConnectTimeout(1, 0);
     memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
@@ -309,14 +309,12 @@ uint32 CSimpleSocket::GetWindowSize(uint32 nOptionName)
 //------------------------------------------------------------------------------
 uint32 CSimpleSocket::SetWindowSize(uint32 nOptionName, uint32 nWindowSize)
 {
-    uint32 nRetVal = 0;
-
     //-------------------------------------------------------------------------
     // no socket given, return system default allocate our own new socket
     //-------------------------------------------------------------------------
     if (m_socket != CSimpleSocket::SocketError)
     {
-        nRetVal = SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
+        SETSOCKOPT(m_socket, SOL_SOCKET, nOptionName, &nWindowSize, sizeof(nWindowSize));
         TranslateSocketError();
     }
     else
@@ -501,7 +499,7 @@ bool CSimpleSocket::Shutdown(CShutdownMode nShutdown)
 {
     CSocketError nRetVal = SocketEunknown;
 
-    nRetVal = (CSocketError)shutdown(m_socket, CSimpleSocket::Sends);
+    nRetVal = (CSocketError)shutdown(m_socket, nShutdown);
     TranslateSocketError();
 
     return (nRetVal == CSimpleSocket::SocketSuccess) ? true: false;
@@ -968,6 +966,7 @@ void CSimpleSocket::TranslateSocketError(void)
     case ENOMEM:
     case EPROTONOSUPPORT:
     case EPIPE:
+    case EOPNOTSUPP:
         SetSocketError(CSimpleSocket::SocketInvalidSocket);
         break;
     case ECONNREFUSED :
@@ -1002,6 +1001,9 @@ void CSimpleSocket::TranslateSocketError(void)
     case ECONNRESET:
     case ENOPROTOOPT:
         SetSocketError(CSimpleSocket::SocketConnectionReset);
+        break;
+    case EADDRINUSE:
+        SetSocketError(CSimpleSocket::SocketAddressInUse);
         break;
     default:
         SetSocketError(CSimpleSocket::SocketEunknown);

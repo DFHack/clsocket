@@ -52,7 +52,7 @@
 /// in a similar fashion.  The big difference is that the method
 /// CPassiveSocket::Accept should not be called on the latter two socket
 /// types.
-class CPassiveSocket : public CSimpleSocket {
+class EXPORT CPassiveSocket : public CSimpleSocket {
 public:
     CPassiveSocket(CSocketType type = SocketTypeTcp);
     virtual ~CPassiveSocket() {
