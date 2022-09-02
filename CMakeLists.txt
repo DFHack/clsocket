@@ -71,6 +71,7 @@ else()
     endif()
 endif()
 TARGET_LINK_LIBRARIES(clsocket ${PROJECT_LIBS})
+TARGET_INCLUDE_DIRECTORIES(clsocket PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # install into configured prefix
 if(NOT CLSOCKET_DEP_ONLY)
