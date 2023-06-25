@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include "PassiveSocket.h"       // Include header for active socket object definition
 
 #define MAX_PACKET 4096 
@@ -13,9 +13,13 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------------------
     socket.Initialize();
 
-    socket.Listen("127.0.0.1", 6789);
+    if(!socket.Listen("127.0.0.1", 6789))
+    {
+        std::cerr << socket.DescribeError() << std::endl;
+        return 1;
+    }
 
-    while (true)
+    while (socket.IsSocketValid())
     {
         if ((pClient = socket.Accept()) != NULL)
         {
