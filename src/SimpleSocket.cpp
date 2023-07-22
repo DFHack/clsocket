@@ -2163,6 +2163,13 @@ bool CSimpleSocket::Select(int32 nTimeoutSec, int32 nTimeoutUSec, bool bAwakeWhe
     int32           nNumDescriptors = -1;
     int32           nError = 0;
 
+    // if (m_socket >= 1024)
+    // {
+    //         SetSocketError(CSimpleSocket::SocketEunknown);
+    //         fprintf(stderr, "error: select() with socket %d >= 1024\n", m_socket);
+    //         // return false;
+    // }
+
     FD_ZERO(&m_errorFds);
     FD_ZERO(&m_readFds);
     FD_ZERO(&m_writeFds);

@@ -300,6 +300,7 @@ CSimpleSocket *CPassiveSocket::Accept()
         }
         else
         {
+            // fprintf(stderr, "error at accept(): got socket %d\n", socket);
             TranslateSocketError();
             socketErrno = GetSocketError();
         }

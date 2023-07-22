@@ -126,6 +126,18 @@ if(UNIX OR (WIN32 OR MINGW))
             endif()
         endif()
 
+        ADD_EXECUTABLE(testmaxconnections-example examples/TestMaxConnections.cpp)
+        TARGET_LINK_LIBRARIES(testmaxconnections-example clsocket)
+        if(NOT CLSOCKET_DEP_ONLY)
+            install(TARGETS testmaxconnections-example DESTINATION bin)
+        endif()
+        set_target_properties(testmaxconnections-example
+            PROPERTIES
+                CXX_STANDARD 11
+                CXX_STANDARD_REQUIRED YES
+                CXX_EXTENSIONS NO
+        )
+
         ADD_EXECUTABLE(querydaytime-example examples/QueryDayTime.cpp)
         TARGET_LINK_LIBRARIES(querydaytime-example clsocket)
 
