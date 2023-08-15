@@ -168,9 +168,7 @@ bool CPassiveSocket::Listen(const char *pAddr, uint16 nPort, int32 nConnectionBa
     ULONG          inAddr;
 #else
     in_addr_t      inAddr;
-
-    int32          nReuse;
-    nReuse = IPTOS_LOWDELAY;
+    int32          nReuse = IPTOS_LOWDELAY;
 
     //--------------------------------------------------------------------------
     // Set the following socket option SO_REUSEADDR.  This will allow the file

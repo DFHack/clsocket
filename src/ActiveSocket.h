@@ -53,4 +53,3 @@
 typedef CSimpleSocket CActiveSocket;
 
 #endif /*  __ACTIVESOCKET_H__  */
-

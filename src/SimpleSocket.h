@@ -521,10 +521,10 @@ public:
         return SetSendTimeout( nSendTimeoutMillis / 1000 , 1000 * (nSendTimeoutMillis % 1000) );
     };
 
-    /// Returns the last error that occured for the instace of the CSimpleSocket
+    /// Returns the last error that occurred for the instance of the CSimpleSocket
     /// instance.  This method should be called immediately to retrieve the
     /// error code for the failing mehtod call.
-    ///  @return last error that occured.
+    ///  @return last error that occurred.
     CSocketError GetSocketError(void) {
         return m_socketErrno;
     };
