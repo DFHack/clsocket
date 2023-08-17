@@ -1,5 +1,5 @@
 
-#include "SimpleSocket.h"       // Include header for active socket object definition
+#include "SimpleSocket.h"
 
 #include <string.h>
 
@@ -7,11 +7,35 @@
 
 int main(int argc, char **argv)
 {
-    CSimpleSocket socket( CSimpleSocket::SocketTypeUdp );
+    const char *pcHostname = 0;
+    const char *pcSendText = 0;
+    const char *pcBindAddr = 0;
+    const uint16 portno = 6789;
+    int bindPort = -1;
+    int mcastTTL = -1;
+    int argidx = 1;
 
-    if ( argc < 3 )
+    if ( argidx < argc )
+        pcHostname = argv[argidx++];
+
+    if ( argidx < argc )
+        pcSendText = argv[argidx++];
+
+    if ( argidx + 1 < argc && !strcmp(argv[argidx], "-m") )
     {
-        fprintf(stderr, "usage: %s <host> <text> [-m [<ttl>] | <bind-address> <bind-port>]\n", argv[0] );
+        argidx++;
+        mcastTTL = atoi(argv[argidx++]);
+    }
+
+    if ( argidx + 1 < argc )
+    {
+        pcBindAddr = argv[argidx++];
+        bindPort = atoi(argv[argidx++]);
+    }
+
+    if ( !pcHostname || !pcSendText )
+    {
+        fprintf(stderr, "usage: %s <host> <text> [-m <ttl>] [<bind-address> <bind-port>]\n", argv[0] );
         fprintf(stderr, "  -m : activate multicast on socket\n");
         return 10;
     }
@@ -19,36 +43,39 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------------------
     // Initialize our socket object
     //--------------------------------------------------------------------------
+    CSimpleSocket socket( CSimpleSocket::SocketTypeUdp );
     socket.Initialize();
 
-    if ( 4 < argc )
+    if ( pcBindAddr && bindPort >= 0 )
     {
-        unsigned bindPort = atoi(argv[4]);
-        bool ret = socket.Bind( argv[3], uint16(bindPort) );
-        fprintf(stderr, "bind to %s:%u %s\n", argv[3], bindPort, (ret ? "successful":"failed") );
+        bool ret = socket.Bind( pcBindAddr, uint16(bindPort) );
+        fprintf(stderr, "bind to %s:%u %s\n", pcBindAddr, bindPort, (ret ? "successful":"failed") );
     }
+    else
+        fprintf(stderr, "binding not parametrized\n");
 
-    bool bConnOK = socket.Open( argv[1], 6789 );
+    bool bConnOK = socket.Open( pcHostname, portno );
     if ( !bConnOK )
     {
-        fprintf(stderr, "error connecting to '%s'!\n", argv[1] );
+        fprintf(stderr, "error connecting to '%s'!\n", pcHostname );
         return 10;
     }
 
-    if ( 3 < argc && !strcmp(argv[3], "-m") )
+    if ( mcastTTL >= 0 && mcastTTL < 256 )
     {
-        uint8 multicastTTL = ( 4 < argc ) ? atoi(argv[4]) : 1;
-        bool ret = socket.SetMulticast(true, 3);
-        fprintf(stderr, "Setting Multicast with TTL 3 %s\n", ret ? "was successful" : "failed");
+        bool ret = socket.SetMulticast(true, uint8(mcastTTL));
+        fprintf(stderr, "Setting Multicast with TTL %d %s\n", mcastTTL, ret ? "was successful" : "failed");
     }
+    else
+        fprintf(stderr, "multicast not parametrized\n");
 
     fprintf(stderr, "\nLocal is %s. Local: %s:%u   "
           , ( socket.IsServerSide() ? "Server" : "Client" )
           , socket.GetLocalAddr(), (unsigned)socket.GetLocalPort());
     fprintf(stderr, "Peer: %s:%u\n", socket.GetPeerAddr(), (unsigned)socket.GetPeerPort());
 
-    size_t sendSize = strlen( argv[2] );
-    socket.Send( argv[2], (int32)sendSize );
+    size_t sendSize = strlen( pcSendText );
+    socket.Send( pcSendText, (int32)sendSize );
 
     return 1;
 }

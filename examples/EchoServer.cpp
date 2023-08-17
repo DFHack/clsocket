@@ -42,6 +42,12 @@ int main(int argc, char **argv)
 
             if (pClient->Receive(MAX_PACKET))
             {
+                fprintf(stderr, "\n%s. Local: %s:%u   Peer: %s:%u\n"
+                      , ( pClient->IsServerSide() ? "Local is Server" : "Local is Client" )
+                      , pClient->GetLocalAddr(), (unsigned)pClient->GetLocalPort()
+                      , pClient->GetPeerAddr(), (unsigned)pClient->GetPeerPort()
+                      );
+
                 //------------------------------------------------------------------
                 // Send response to client and close connection to the client.
                 //------------------------------------------------------------------
