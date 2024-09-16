@@ -452,6 +452,7 @@ public:
     /// Returns clients Internet host address as a string in standard numbers-and-dots notation.
     ///  @return NULL if invalid
     const char *GetClientAddr() {
+#pragma warning( disable : 4996 )
         return inet_ntoa(m_stClientSockaddr.sin_addr);
     };
 
@@ -464,6 +465,7 @@ public:
     /// Returns server Internet host address as a string in standard numbers-and-dots notation.
     ///  @return NULL if invalid
     const char *GetServerAddr() {
+#pragma warning( disable : 4996 )
         return inet_ntoa(m_stServerSockaddr.sin_addr);
     };
 
