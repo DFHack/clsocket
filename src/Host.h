@@ -156,13 +156,18 @@ extern "C"
 #define SHUT_RDWR              2
 #define ACCEPT(a,b,c)          accept(a,b,c)
 #define CONNECT(a,b,c)         connect(a,b,c)
+// returns -1 on error
 #define CLOSE(a)               closesocket(a)
 #define READ(a,b,c)            read(a,b,c)
+// returns -1 on error
 #define RECV(a,b,c,d)          recv(a, (char *)b, c, d)
+// returns -1 on error
 #define RECVFROM(a,b,c,d,e,f)  recvfrom(a, (char *)b, c, d, (sockaddr *)e, (int *)f)
 #define RECV_FLAGS             MSG_WAITALL
 #define SELECT(a,b,c,d,e)      select((int32)a,b,c,d,e)
+// returns -1 on error
 #define SEND(a,b,c,d)          send(a, (const char *)b, (int)c, d)
+// returns -1 on error
 #define SENDTO(a,b,c,d,e,f)    sendto(a, (const char *)b, (int)c, d, e, f)
 #define SEND_FLAGS             0
 #define SENDFILE(a,b,c,d)      sendfile(a, b, c, d)
@@ -172,6 +177,7 @@ extern "C"
 #define WRITE(a,b,c)           write(a,b,c)
 #define WRITEV(a,b,c)          Writev(b, c)
 #define GETSOCKOPT(a,b,c,d,e)  getsockopt(a,b,c,(char *)d, (int *)e)
+// returns -1 on error
 #define SETSOCKOPT(a,b,c,d,e)  setsockopt(a,b,c,(char *)d, (int)e)
 #define GETHOSTBYNAME(a)       gethostbyname(a)
 #endif
@@ -179,13 +185,18 @@ extern "C"
 #if defined(_LINUX) || defined(_DARWIN)
 #define ACCEPT(a,b,c)          accept(a,b,c)
 #define CONNECT(a,b,c)         connect(a,b,c)
+// returns -1 on error
 #define CLOSE(a)               close(a)
 #define READ(a,b,c)            read(a,b,c)
+// returns -1 on error
 #define RECV(a,b,c,d)          recv(a, (void *)b, c, d)
+// returns -1 on error
 #define RECVFROM(a,b,c,d,e,f)  recvfrom(a, (char *)b, c, d, (sockaddr *)e, f)
 #define RECV_FLAGS             MSG_WAITALL
 #define SELECT(a,b,c,d,e)      select(a,b,c,d,e)
+// returns -1 on error
 #define SEND(a,b,c,d)          send(a, (const int8 *)b, c, d)
+// returns -1 on error
 #define SENDTO(a,b,c,d,e,f)    sendto(a, (const int8 *)b, c, d, e, f)
 #define SEND_FLAGS             0
 #define SENDFILE(a,b,c,d)      sendfile(a, b, c, d)
@@ -195,6 +206,7 @@ extern "C"
 #define WRITE(a,b,c)           write(a,b,c)
 #define WRITEV(a,b,c)          writev(a, b, c)
 #define GETSOCKOPT(a,b,c,d,e)  getsockopt((int)a,(int)b,(int)c,(void *)d,(socklen_t *)e)
+// returns -1 on error
 #define SETSOCKOPT(a,b,c,d,e)  setsockopt((int)a,(int)b,(int)c,(const void *)d,(int)e)
 #define GETHOSTBYNAME(a)       gethostbyname(a)
 #endif

@@ -133,7 +133,6 @@ bool CActiveSocket::ConnectTCP(const char *pAddr, uint16 nPort)
 //------------------------------------------------------------------------------
 bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
 {
-    bool           bRetVal = false;
     struct in_addr stIpAddress;
 
     //------------------------------------------------------------------
@@ -152,7 +151,7 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
             SetSocketError(SocketInvalidAddress);
         }
 #endif
-        return bRetVal;
+        return false;
     }
 
     memcpy(&stIpAddress, m_pHE->h_addr_list[0], m_pHE->h_length);
@@ -161,7 +160,7 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
     if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
     {
         TranslateSocketError();
-        return bRetVal;
+        return false;
     }
 
     m_stServerSockaddr.sin_port = htons(nPort);
@@ -173,16 +172,15 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
     m_timer.Initialize();
     m_timer.SetStartTime();
 
-    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
+    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) == CSimpleSocket::SocketError)
     {
-        bRetVal = true;
+        TranslateSocketError();
+        return false;
     }
-
-    TranslateSocketError();
 
     m_timer.SetEndTime();
 
-    return bRetVal;
+    return true;
 }
 
 //------------------------------------------------------------------------------
@@ -192,7 +190,6 @@ bool CActiveSocket::ConnectUDP(const char *pAddr, uint16 nPort)
 //------------------------------------------------------------------------------
 bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
 {
-    bool           bRetVal = false;
     struct in_addr stIpAddress;
     //------------------------------------------------------------------
     // Pre-connection setup that must be preformed
@@ -210,7 +207,7 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
             SetSocketError(SocketInvalidAddress);
         }
 #endif
-        return bRetVal;
+        return false;
     }
 
     memcpy(&stIpAddress, m_pHE->h_addr_list[0], m_pHE->h_length);
@@ -219,7 +216,7 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
     if ((int32)m_stServerSockaddr.sin_addr.s_addr == CSimpleSocket::SocketError)
     {
         TranslateSocketError();
-        return bRetVal;
+        return false;
     }
 
     m_stServerSockaddr.sin_port = htons(nPort);
@@ -231,16 +228,14 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
     m_timer.Initialize();
     m_timer.SetStartTime();
 
-    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) != CSimpleSocket::SocketError)
+    if (connect(m_socket, (struct sockaddr*)&m_stServerSockaddr, sizeof(m_stServerSockaddr)) == CSimpleSocket::SocketError)
     {
-        bRetVal = true;
+        TranslateSocketError();
+        return false;
     }
 
-    TranslateSocketError();
-
     m_timer.SetEndTime();
-
-    return bRetVal;
+    return true;
 }
 
 
@@ -251,26 +246,25 @@ bool CActiveSocket::ConnectRAW(const char *pAddr, uint16 nPort)
 //------------------------------------------------------------------------------
 bool CActiveSocket::Open(const char *pAddr, uint16 nPort)
 {
-    bool bRetVal = false;
-
     if (IsSocketValid() == false)
     {
         SetSocketError(CSimpleSocket::SocketInvalidSocket);
-        return bRetVal;
+        return false;
     }
 
     if (pAddr == NULL)
     {
         SetSocketError(CSimpleSocket::SocketInvalidAddress);
-        return bRetVal;
+        return false;
     }
 
     if (nPort == 0)
     {
         SetSocketError(CSimpleSocket::SocketInvalidPort);
-        return bRetVal;
+        return false;
     }
 
+    bool bRetVal = false;
     switch (m_nSocketType)
     {
     case CSimpleSocket::SocketTypeTcp :
@@ -294,16 +288,28 @@ bool CActiveSocket::Open(const char *pAddr, uint16 nPort)
     //--------------------------------------------------------------------------
     if (bRetVal)
     {
-        socklen_t nSockLen = sizeof(struct sockaddr);
+        socklen_t nSockLen = sizeof(m_stServerSockaddr);
 
         memset(&m_stServerSockaddr, 0, nSockLen);
-        getpeername(m_socket, (struct sockaddr *)&m_stServerSockaddr, &nSockLen);
+        if (getpeername(m_socket,
+                        (struct sockaddr *)&m_stServerSockaddr,
+                        &nSockLen) == CSimpleSocket::SocketError)
+        {
+            TranslateSocketError();
+            return false;
+        }
 
-        nSockLen = sizeof(struct sockaddr);
+        nSockLen = sizeof(m_stClientSockaddr);
         memset(&m_stClientSockaddr, 0, nSockLen);
-        getsockname(m_socket, (struct sockaddr *)&m_stClientSockaddr, &nSockLen);
+        if (getsockname(m_socket,
+                        (struct sockaddr *)&m_stClientSockaddr,
+                        &nSockLen) == CSimpleSocket::SocketError)
+        {
+            TranslateSocketError();
+            return false;
+        }
 
-        SetSocketError(SocketSuccess);
+        SetSocketError(CSimpleSocket::SocketSuccess);
     }
 
     return bRetVal;

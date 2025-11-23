@@ -87,8 +87,11 @@
 //-----------------------------------------------------------------------------
 // General class macro definitions and typedefs
 //-----------------------------------------------------------------------------
-#ifndef INVALID_SOCKET
-#define INVALID_SOCKET    ~(0)
+
+// Windows socket headers define INVALID_SOCKET
+// For POSIX, it's -1.
+#ifndef _WIN32
+    #define INVALID_SOCKET -1
 #endif
 
 #define SOCKET_SENDFILE_BLOCKSIZE 8192
@@ -163,8 +166,10 @@ public:
     /// @return true if properly initialized.
     virtual bool Initialize(void);
 
-    /// Close socket
-    /// @return true if successfully closed otherwise returns false.
+    /// Close socket.
+    /// The socket is marked unusable immediately regardless of return value,
+    /// @return true if the OS successfully closed
+    /// otherwise returns false if the OS encountered an error during cleanup.
     virtual bool Close(void);
 
     /// Shutdown shut down socket send and receive operations
@@ -198,7 +203,7 @@ public:
     /// descriptor.
     ///  @return true if the socket object contains a valid socket descriptor.
     virtual bool IsSocketValid(void) {
-        return (m_socket != SocketError);
+        return (m_socket != INVALID_SOCKET);
     };
 
     /// Provides a standard error code for cross platform development by
@@ -548,7 +553,9 @@ private:
 
     /// Flush the socket descriptor owned by the object.
     /// @return true data was successfully sent, else return false;
-    bool Flush();
+    static bool Flush();
+
+    bool SetTcpNoDelay(bool enable);
 
     CSimpleSocket *operator=(CSimpleSocket &socket);
 
